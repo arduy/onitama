@@ -1,5 +1,4 @@
 from onitama import Player
-from enum import Enum
 
 
 class Card:
@@ -16,20 +15,19 @@ class Card:
         return {(x+i, y+j) for (i, j) in self.moves[player]}
 
 
-class Cards(Enum):
-    MONKEY = Card([(1, -1), (1, 1), (-1, -1), (-1, 1)], Player.BLUE)
-    ELEPHANT = Card([(-1, 0), (-1, 1), (1, 0), (1, 1)], Player.RED)
-    CRANE = Card([(-1, -1), (0, 1), (1, -1)], Player.BLUE)
-    MANTIS = Card([(-1, 1), (0, -1), (1, 1)], Player.RED)
-    TIGER = Card([(0, 2), (0, -1)], Player.BLUE)
-    DRAGON = Card([(-2, 1), (-1, -1), (1, -1), (2, 1)], Player.RED)
-    BOAR = Card([(-1, 0), (0, 1), (1, 0)], Player.RED)
-    CRAB = Card([(-2, 0), (0, 1), (2, 0)], Player.BLUE)
-    GOOSE = Card([(-1, 1), (-1, 0), (1, 0), (1, -1)], Player.BLUE)
-    ROOSTER = Card([(1, 1), (1, 0), (-1, 0), (-1, -1)], Player.RED)
-    EEL = Card([(-1, 1), (-1, -1), (1, 0)], Player.BLUE)
-    COBRA = Card([(1, 1), (1, -1), (-1, 0)], Player.RED)
-    HORSE = Card([(-1, 0), (0, 1), (0, -1)], Player.RED)
-    OX = Card([(1, 0), (0, 1), (0, -1)], Player.BLUE)
-    FROG = Card([(-2, 0), (-1, 1), (1, -1)], Player.RED)
-    RABBIT = Card([(2, 0), (1, 1), (-1, -1)], Player.BLUE)
+MONKEY = Card([(1, -1), (1, 1), (-1, -1), (-1, 1)], Player.BLUE)
+ELEPHANT = Card([(-1, 0), (-1, 1), (1, 0), (1, 1)], Player.RED)
+CRANE = Card([(-1, -1), (0, 1), (1, -1)], Player.BLUE)
+MANTIS = Card([(-1, 1), (0, -1), (1, 1)], Player.RED)
+TIGER = Card([(0, 2), (0, -1)], Player.BLUE)
+DRAGON = Card([(-2, 1), (-1, -1), (1, -1), (2, 1)], Player.RED)
+BOAR = Card([(-1, 0), (0, 1), (1, 0)], Player.RED)
+CRAB = Card([(-2, 0), (0, 1), (2, 0)], Player.BLUE)
+GOOSE = Card([(-1, 1), (-1, 0), (1, 0), (1, -1)], Player.BLUE)
+ROOSTER = Card([(1, 1), (1, 0), (-1, 0), (-1, -1)], Player.RED)
+EEL = Card([(-1, 1), (-1, -1), (1, 0)], Player.BLUE)
+COBRA = Card([(1, 1), (1, -1), (-1, 0)], Player.RED)
+HORSE = Card([(-1, 0), (0, 1), (0, -1)], Player.RED)
+OX = Card([(1, 0), (0, 1), (0, -1)], Player.BLUE)
+FROG = Card([(-2, 0), (-1, 1), (1, -1)], Player.RED)
+RABBIT = Card([(2, 0), (1, 1), (-1, -1)], Player.BLUE)
