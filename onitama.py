@@ -8,17 +8,31 @@ class Board:
         self.matrix[4] = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING, Piece.B_PAWN, Piece.B_PAWN]
 
     def get(self, loc):
-        return self.matrix[loc[0]][loc[1]]
+        if self.in_bounds(loc):
+            return self.matrix[loc[0]][loc[1]]
+        else:
+            raise BoardBoundsError
 
     def set(self, loc, val):
-        self.matrix[loc[0]][loc[1]] = val
-
-    def in_bounds(self, loc):
-        return loc[0] in range(4) and loc[1] in range(4)
+        if self.in_bounds(loc):
+            self.matrix[loc[0]][loc[1]] = val
+        else:
+            raise BoardBoundsError
 
     def validate_move(self, move):
-        return (self.get(move.start).belongs_to(move.player)
-                and not self.get(move.end).belongs_to(move.player))
+        try:
+            return (self.get(move.start).belongs_to(move.player)
+                    and not self.get(move.end).belongs_to(move.player))
+        except BoardBoundsError:
+            return False
+
+    @staticmethod
+    def in_bounds(loc):
+        return loc[0] in range(4) and loc[1] in range(4)
+
+
+class BoardBoundsError(Exception):
+    pass
 
 
 class Game:
