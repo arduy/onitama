@@ -3,7 +3,7 @@ from enum import Enum
 
 class Board:
     def __init__(self):
-        self.matrix = [[Piece.EMPTY for _ in range(4)] for _ in range(4)]
+        self.matrix = [[Piece.EMPTY for _ in range(5)] for _ in range(5)]
         self.matrix[0] = [Piece.R_PAWN, Piece.R_PAWN, Piece.R_KING, Piece.R_PAWN, Piece.R_PAWN]
         self.matrix[4] = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING, Piece.B_PAWN, Piece.B_PAWN]
 
@@ -28,7 +28,7 @@ class Board:
 
     @staticmethod
     def in_bounds(loc):
-        return loc[0] in range(4) and loc[1] in range(4)
+        return loc[0] in range(5) and loc[1] in range(5)
 
 
 class BoardBoundsError(Exception):
