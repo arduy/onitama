@@ -31,3 +31,6 @@ HORSE = Card([(-1, 0), (0, 1), (0, -1)], Player.RED)
 OX = Card([(1, 0), (0, 1), (0, -1)], Player.BLUE)
 FROG = Card([(-2, 0), (-1, 1), (1, -1)], Player.RED)
 RABBIT = Card([(2, 0), (1, 1), (-1, -1)], Player.BLUE)
+
+ALL_CARDS = [MONKEY, ELEPHANT, CRANE, MANTIS, TIGER, DRAGON, BOAR,
+             CRAB, GOOSE, ROOSTER, EEL, COBRA, HORSE, OX, FROG, RABBIT]
