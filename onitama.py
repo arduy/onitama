@@ -20,6 +20,10 @@ class Board:
             raise BoardBoundsError
 
     def validate_move(self, move):
+        # Checks a move against the following (board specific) conditions:
+        #   Player is moving his/her own piece
+        #   Source and destination are in bounds
+        #   Destination contains enemy piece or is empty
         try:
             return (self.get(move.start).belongs_to(move.player)
                     and not self.get(move.end).belongs_to(move.player))
@@ -37,8 +41,8 @@ class BoardBoundsError(Exception):
 
 class Game:
     def __init__(self, start_cards):
-        # start_cards - list of 5 cards
-        # first two cards are red's, next two are blue's, last is neutral
+        # start_cards : list of 5 cards
+        #   first two cards are red's, next two are blue's, last is neutral
         self.start_cards = start_cards
         self.cards = {
             Player.RED: start_cards[0:2],
@@ -50,6 +54,7 @@ class Game:
         self.active_player = self.neutral_card.start_player
 
     def validate_move(self, move):
+        # Checks that the move is legal in the current game
         return (move.player == self.active_player
                 and move.card in self.cards[move.player]
                 and self.board.validate_move(move)
@@ -68,7 +73,8 @@ class Game:
 
 class Move:
     def __init__(self, player, start, end, card):
-        # start, end: start and end coordinates of the move
+        # start: (x,y) tuple of start location
+        # end: (x,y) tuple of end location
         self.player = player
         self.start = start
         self.end = end
@@ -79,6 +85,7 @@ class Move:
         return self.end[0]-self.start[0], self.end[1]-self.start[1]
 
     def validate(self):
+        # Checks that the move corresponds to a legal displacement vector for the given card
         return self.displacement() in self.card.moves[self.player]
 
 
