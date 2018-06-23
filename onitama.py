@@ -3,19 +3,19 @@ from enum import Enum
 
 class Board:
     def __init__(self):
-        self.matrix = [[Piece.EMPTY for _ in range(5)] for _ in range(5)]
-        self.matrix[0] = [Piece.R_PAWN, Piece.R_PAWN, Piece.R_KING, Piece.R_PAWN, Piece.R_PAWN]
-        self.matrix[4] = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING, Piece.B_PAWN, Piece.B_PAWN]
+        self.__array = [[Piece.EMPTY for _ in range(5)] for _ in range(5)]
+        self.__array[0] = [Piece.R_PAWN, Piece.R_PAWN, Piece.R_KING, Piece.R_PAWN, Piece.R_PAWN]
+        self.__array[4] = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING, Piece.B_PAWN, Piece.B_PAWN]
 
     def get(self, loc):
         if self.in_bounds(loc):
-            return self.matrix[loc[1]][loc[0]]
+            return self.__array[loc[1]][loc[0]]
         else:
             raise BoardBoundsError
 
     def set(self, loc, val):
         if self.in_bounds(loc):
-            self.matrix[loc[1]][loc[0]] = val
+            self.__array[loc[1]][loc[0]] = val
         else:
             raise BoardBoundsError
 
