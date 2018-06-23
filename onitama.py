@@ -9,13 +9,13 @@ class Board:
 
     def get(self, loc):
         if self.in_bounds(loc):
-            return self.matrix[loc[0]][loc[1]]
+            return self.matrix[loc[1]][loc[0]]
         else:
             raise BoardBoundsError
 
     def set(self, loc, val):
         if self.in_bounds(loc):
-            self.matrix[loc[0]][loc[1]] = val
+            self.matrix[loc[1]][loc[0]] = val
         else:
             raise BoardBoundsError
 
