@@ -154,6 +154,8 @@ class Move:
             raise MoveParseError
         except IndexError:
             raise MoveParseError
+        except AttributeError:
+            raise MoveParseError
 
 
 class Piece(Enum):
