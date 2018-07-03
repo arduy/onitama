@@ -1,6 +1,7 @@
 import unittest
 import cards
 from onitama import Game, Move, Player, Piece, BoardBoundsError
+import onitama
 
 
 class TestGame(unittest.TestCase):
@@ -85,6 +86,21 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game.active_player, Player.BLUE)
         self.assertEqual(self.game.neutral_card, cards.MONKEY)
         self.assertTrue((0, 0) not in self.game.pawns[Player.RED] and (1, 1) in self.game.pawns[Player.RED])
+
+    def test_bad_move_string(self):
+        string = 'c5-c4 [crane] a1-b2 [monkey'
+        with self.assertRaises(onitama.MoveParseError):
+            Move.parse_moves(Player.BLUE, string)
+        string = 'c5-c4 [crane] a1-b [monkey]'
+        with self.assertRaises(onitama.MoveParseError):
+            Move.parse_moves(Player.BLUE, string)
+        string = 'c5-c4 [crane] a1b2 [monkey]'
+        with self.assertRaises(onitama.MoveParseError):
+            Move.parse_moves(Player.BLUE, string)
+        string = 'c5-c4 [crane] a1-b2 [monkey] '
+        with self.assertRaises(onitama.MoveParseError):
+            Move.parse_moves(Player.BLUE, string)
+        string = 'c5-c4 [crane] a1-b2 [monkey]'
 
 
 if __name__ == '__main__':
