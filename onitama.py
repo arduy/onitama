@@ -40,6 +40,7 @@ class BoardBoundsError(Exception):
 
 
 class Game:
+
     def __init__(self, start_cards):
         # start_cards : list of 5 cards
         #   first two cards are red's, next two are blue's, last is neutral
@@ -52,6 +53,14 @@ class Game:
         self.board = Board()
         self.moves = []
         self.active_player = self.neutral_card.start_player
+        self.pawns = {
+            Player.RED: {(x, 0) for x in range(5) if x != 2},
+            Player.BLUE: {(x, 4) for x in range(5) if x != 2}
+        }
+        self.kings = {
+            Player.RED: {(2, 0)},
+            Player.BLUE: {(2, 4)}
+        }
 
     def validate_move(self, move):
         # Checks that the move is legal in the current game
@@ -62,13 +71,42 @@ class Game:
 
     def do_move(self, move):
         if self.validate_move(move):
+            opp = Player.RED if move.player == Player.BLUE else Player.BLUE
             piece = self.board.get(move.start)
+            if piece.is_king():
+                self.kings[move.player].remove(move.start)
+                self.kings[move.player].add(move.end)
+            elif piece.is_pawn():
+                self.pawns[move.player].remove(move.start)
+                self.pawns[move.player].add(move.end)
+            dest_piece = self.board.get(move.end)
+            if dest_piece.is_king():
+                self.kings[opp].remove(move.end)
+            elif dest_piece.is_pawn():
+                self.pawns[opp].remove(move.end)
             self.board.set(move.start, Piece.EMPTY)
             self.board.set(move.end, piece)
             self.cards[move.player].append(self.neutral_card)
             self.cards[move.player].remove(move.card)
             self.neutral_card = move.card
             self.moves.append(move)
+            self.active_player = opp
+        else:
+            raise IllegalMoveError
+
+    def check_victory(self):
+        if len(self.kings[Player.RED]) == 0:
+            return Player.BLUE
+        if len(self.kings[Player.BLUE]) == 0:
+            return Player.RED
+        if (2, 4) in self.kings[Player.RED]:
+            return Player.RED
+        if (2, 0) in self.kings[Player.BLUE]:
+            return Player.BLUE
+
+
+class IllegalMoveError(Exception):
+    pass
 
 
 class Move:
@@ -103,6 +141,12 @@ class Piece(Enum):
             return (self == Piece.B_PAWN) or (self == Piece.B_KING)
         else:
             return False
+
+    def is_pawn(self):
+        return self in {self.R_PAWN, self.B_PAWN}
+
+    def is_king(self):
+        return self in {self.R_KING, self.B_KING}
 
 
 class Player(Enum):
