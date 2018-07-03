@@ -1,4 +1,6 @@
 from enum import Enum
+import re
+import cards
 
 
 class Board:
@@ -109,6 +111,10 @@ class IllegalMoveError(Exception):
     pass
 
 
+class MoveParseError:
+    pass
+
+
 class Move:
     def __init__(self, player, start, end, card):
         # start: (x,y) tuple of start location
@@ -125,6 +131,34 @@ class Move:
     def validate(self):
         # Checks that the move corresponds to a legal displacement vector for the given card
         return self.displacement() in self.card.moves[self.player]
+
+    @staticmethod
+    def parse_moves(start_player, move_string):
+        try:
+            result = []
+            other_player = Player.RED if start_player == Player.BLUE else Player.BLUE
+            players = [start_player, other_player]
+            moves = move_string.split(' ')
+            x_codes = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'f': 4}
+            y_codes = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
+            for i, move in enumerate(moves):
+                if i % 2 == 0:
+                    start = (x_codes[move[0]], y_codes[move[1]])
+                    end = (x_codes[move[3]], y_codes[move[4]])
+                    player = players[i//2 % 2]
+                    card_string = re.match(r'\[(.+)\]', moves[i+1])
+                    card = cards.NAME_TO_CARD[card_string.group(1).lower()]
+                    result.append(Move(player, start, end, card))
+            return result
+        except KeyError:
+            raise MoveParseError
+        except IndexError:
+            raise MoveParseError
+
+
+
+
+
 
 
 class Piece(Enum):

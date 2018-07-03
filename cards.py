@@ -34,3 +34,22 @@ RABBIT = Card([(2, 0), (1, 1), (-1, -1)], Player.BLUE)
 
 ALL_CARDS = [MONKEY, ELEPHANT, CRANE, MANTIS, TIGER, DRAGON, BOAR,
              CRAB, GOOSE, ROOSTER, EEL, COBRA, HORSE, OX, FROG, RABBIT]
+
+NAME_TO_CARD = {
+    'monkey': MONKEY,
+    'elephant': ELEPHANT,
+    'crane': CRANE,
+    'mantis': MANTIS,
+    'tiger': TIGER,
+    'dragon': DRAGON,
+    'boar': BOAR,
+    'crab': CRAB,
+    'goose': GOOSE,
+    'rooster': ROOSTER,
+    'eel': EEL,
+    'cobra': COBRA,
+    'horse': HORSE,
+    'ox': OX,
+    'frog': FROG,
+    'rabbit': RABBIT,
+}

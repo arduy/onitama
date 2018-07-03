@@ -69,6 +69,23 @@ class TestGame(unittest.TestCase):
         self.assertEqual(self.game.neutral_card, cards.MONKEY)
         self.assertTrue((0, 0) not in self.game.pawns[Player.RED] and (1, 1) in self.game.pawns[Player.RED])
 
+    def test_do_parsed_moves(self):
+        string = 'c5-c4 [crane] a1-b2 [monkey]'
+        moves = Move.parse_moves(Player.BLUE, string)
+        self.game.do_move(moves[0])
+        self.assertEqual(self.game.board.get((2, 3)), Piece.B_KING)
+        self.assertEqual(self.game.board.get((2, 4)), Piece.EMPTY)
+        self.assertEqual(self.game.active_player, Player.RED)
+        self.assertEqual(self.game.neutral_card, cards.CRANE)
+        self.assertFalse((2, 4) in self.game.kings[Player.BLUE])
+        self.assertTrue((2, 3) in self.game.kings[Player.BLUE])
+        self.game.do_move(moves[1])
+        self.assertEqual(self.game.board.get((0, 0)), Piece.EMPTY)
+        self.assertEqual(self.game.board.get((1, 1)), Piece.R_PAWN)
+        self.assertEqual(self.game.active_player, Player.BLUE)
+        self.assertEqual(self.game.neutral_card, cards.MONKEY)
+        self.assertTrue((0, 0) not in self.game.pawns[Player.RED] and (1, 1) in self.game.pawns[Player.RED])
+
 
 if __name__ == '__main__':
     unittest.main()
