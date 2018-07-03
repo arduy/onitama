@@ -100,7 +100,6 @@ class TestGame(unittest.TestCase):
         string = 'c5-c4 [crane] a1-b2 [monkey] '
         with self.assertRaises(onitama.MoveParseError):
             Move.parse_moves(Player.BLUE, string)
-        string = 'c5-c4 [crane] a1-b2 [monkey]'
 
 
 if __name__ == '__main__':
