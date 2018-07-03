@@ -3,7 +3,7 @@ import cards
 from onitama import Game, Move, Player, Piece, BoardBoundsError
 
 
-class TestMoves(unittest.TestCase):
+class TestGame(unittest.TestCase):
     def setUp(self):
         self.game = Game([cards.MONKEY, cards.ELEPHANT, cards.CRANE, cards.MANTIS, cards.TIGER])
 
@@ -51,6 +51,23 @@ class TestMoves(unittest.TestCase):
         self.assertFalse(self.game.board.validate_move(move))
         self.game.board.set((0, 0), Piece.EMPTY)
         self.assertTrue(self.game.board.validate_move(move))
+
+    def test_do_move(self):
+        move = Move(Player.BLUE, (2, 4), (2, 3), cards.CRANE)
+        self.game.do_move(move)
+        self.assertEqual(self.game.board.get((2, 3)), Piece.B_KING)
+        self.assertEqual(self.game.board.get((2, 4)), Piece.EMPTY)
+        self.assertEqual(self.game.active_player, Player.RED)
+        self.assertEqual(self.game.neutral_card, cards.CRANE)
+        self.assertFalse((2, 4) in self.game.kings[Player.BLUE])
+        self.assertTrue((2, 3) in self.game.kings[Player.BLUE])
+        move = Move(Player.RED, (0, 0), (1, 1), cards.MONKEY)
+        self.game.do_move(move)
+        self.assertEqual(self.game.board.get((0, 0)), Piece.EMPTY)
+        self.assertEqual(self.game.board.get((1, 1)), Piece.R_PAWN)
+        self.assertEqual(self.game.active_player, Player.BLUE)
+        self.assertEqual(self.game.neutral_card, cards.MONKEY)
+        self.assertTrue((0, 0) not in self.game.pawns[Player.RED] and (1, 1) in self.game.pawns[Player.RED])
 
 
 if __name__ == '__main__':
