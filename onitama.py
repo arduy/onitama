@@ -111,7 +111,7 @@ class IllegalMoveError(Exception):
     pass
 
 
-class MoveParseError:
+class MoveParseError(Exception):
     pass
 
 
@@ -154,11 +154,6 @@ class Move:
             raise MoveParseError
         except IndexError:
             raise MoveParseError
-
-
-
-
-
 
 
 class Piece(Enum):
