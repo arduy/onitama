@@ -4,8 +4,10 @@ import re
 
 class Board:
     def __init__(self):
-        red = [Piece.R_PAWN, Piece.R_PAWN, Piece.R_KING, Piece.R_PAWN, Piece.R_PAWN]
-        blue = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING, Piece.B_PAWN, Piece.B_PAWN]
+        red = [Piece.R_PAWN, Piece.R_PAWN, Piece.R_KING,
+               Piece.R_PAWN, Piece.R_PAWN]
+        blue = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING,
+                Piece.B_PAWN, Piece.B_PAWN]
         middle = [Piece.EMPTY for _ in range(15)]
         self.array = red + middle + blue
 
@@ -97,14 +99,15 @@ class Game:
             raise IllegalMoveError
 
     def check_victory(self):
-        if len(self.kings[Player.RED]) == 0:
+        if not self.kings[Player.RED]:
             return Player.BLUE
-        if len(self.kings[Player.BLUE]) == 0:
+        if not self.kings[Player.BLUE]:
             return Player.RED
         if (2, 4) in self.kings[Player.RED]:
             return Player.RED
         if (2, 0) in self.kings[Player.BLUE]:
             return Player.BLUE
+        return None
 
 
 class IllegalMoveError(Exception):
@@ -129,15 +132,14 @@ class Move:
         return self.end[0]-self.start[0], self.end[1]-self.start[1]
 
     def validate(self):
-        # Checks that the move corresponds to a legal displacement vector for the given card
+        # Checks that the move corresponds to a legal displacement vector
         return self.displacement() in self.card.moves[self.player]
 
     @staticmethod
     def parse_moves(start_player, move_string):
         try:
             result = []
-            other_player = Player.RED if start_player == Player.BLUE else Player.BLUE
-            players = [start_player, other_player]
+            players = [start_player, start_player.other()]
             moves = move_string.split(' ')
             x_codes = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'f': 4}
             y_codes = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
@@ -183,6 +185,9 @@ class Piece(Enum):
 class Player(Enum):
     RED = 0
     BLUE = 1
+
+    def other(self):
+        return Player.RED if self == Player.BLUE else Player.BLUE
 
 
 class Card:
