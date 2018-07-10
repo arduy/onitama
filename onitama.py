@@ -7,17 +7,17 @@ class Board:
         red = [Piece.R_PAWN, Piece.R_PAWN, Piece.R_KING, Piece.R_PAWN, Piece.R_PAWN]
         blue = [Piece.B_PAWN, Piece.B_PAWN, Piece.B_KING, Piece.B_PAWN, Piece.B_PAWN]
         middle = [Piece.EMPTY for _ in range(15)]
-        self.__array = red + middle + blue
+        self.array = red + middle + blue
 
     def get(self, loc):
         if self.in_bounds(loc):
-            return self.__array[loc[0] + 5*loc[1]]
+            return self.array[loc[0] + 5 * loc[1]]
         else:
             raise BoardBoundsError
 
     def set(self, loc, val):
         if self.in_bounds(loc):
-            self.__array[loc[0] + 5*loc[1]] = val
+            self.array[loc[0] + 5 * loc[1]] = val
         else:
             raise BoardBoundsError
 
