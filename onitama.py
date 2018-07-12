@@ -1,4 +1,5 @@
 from enum import Enum
+from collections import defaultdict
 import re
 
 
@@ -108,6 +109,27 @@ class Game:
         if (2, 0) in self.kings[Player.BLUE]:
             return Player.BLUE
         return None
+
+    # Compute legal moves for active player.
+    # Returns a dictionary mapping Cards to another dictionary which maps
+    # each start coordinate to a set of legal end coordinates.
+    # Example: legal_moves()[card][(x, y)] is a set of legal end coordinates
+    # for a move using Card card and starting at coordinate (x, y)
+    def legal_moves(self):
+        cards = self.cards[self.active_player]
+        result = dict()
+        for card in cards:
+            result[card] = defaultdict(set)
+        board_range = {(x, y) for x in range(5) for y in range(5)}
+        pieces = self.pawns[self.active_player].union(self.kings[self.active_player])
+        for coord in pieces:
+            for card in cards:
+                moves = card.moves[self.active_player]
+                end_coords = {
+                    (coord[0]+move[0], coord[1]+move[1]) for move in moves
+                }.intersection(board_range).difference(pieces)
+                result[card][coord] = result[card][coord].union(end_coords)
+        return result
 
 
 class IllegalMoveError(Exception):

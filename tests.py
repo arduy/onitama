@@ -100,6 +100,16 @@ class TestGame(unittest.TestCase):
         with self.assertRaises(onitama.MoveParseError):
             Move.parse_moves(Player.BLUE, string)
 
+    def test_legal_moves(self):
+        lm = self.game.legal_moves()
+        self.assertEqual(lm[onitama.MANTIS][(2, 4)], {(1, 3), (3, 3)})
+        self.assertEqual(lm[onitama.CRANE][(2, 4)], {(2, 3)})
+        self.assertEqual(lm[onitama.MANTIS][(0, 4)], {(1, 3)})
+        self.assertEqual(lm[onitama.CRANE][(0, 4)], {(0, 3)})
+        for card in [onitama.CRANE, onitama.MANTIS]:
+            for coord in {(x, y) for x in range(5) for y in range(5)}.difference((x, 4) for x in range(5)):
+                self.assertEqual(lm[card][coord], set())
+
 
 if __name__ == '__main__':
     unittest.main()
