@@ -110,6 +110,18 @@ class TestGame(unittest.TestCase):
             for coord in {(x, y) for x in range(5) for y in range(5)}.difference((x, 4) for x in range(5)):
                 self.assertEqual(lm[card][coord], set())
 
+    def test_victory(self):
+        cardnames = ['monkey', 'crab', 'tiger', 'elephant', 'rabbit']
+        cards = [onitama.NAME_TO_CARD[card] for card in cardnames]
+        game = Game(cards)
+        moves = 'b5-b3 [tiger] c1-b2 [monkey] c5-b4 [elephant] b2-b4 [tiger]'
+        parsed = Move.parse_moves(onitama.Player.BLUE, moves)
+        for move in parsed:
+            game.do_move(move)
+        self.assertEqual(game.check_victory(), onitama.Player.RED)
+        with self.assertRaises(onitama.IllegalMoveError):
+            game.do_move(Move.parse_moves(Player.BLUE, 'b3-c2 [monkey]')[0])
+
 
 if __name__ == '__main__':
     unittest.main()

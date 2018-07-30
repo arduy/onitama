@@ -72,7 +72,8 @@ class Game:
         return (move.player == self.active_player
                 and move.card in self.cards[move.player]
                 and self.board.validate_move(move)
-                and move.validate())
+                and move.validate()
+                and self.check_victory() is None)
 
     def do_move(self, move):
         if self.validate_move(move):
@@ -120,6 +121,8 @@ class Game:
         result = dict()
         for card in cards:
             result[card] = defaultdict(set)
+        if self.check_victory() is not None:
+            return result
         board_range = {(x, y) for x in range(5) for y in range(5)}
         pieces = self.pawns[self.active_player].union(self.kings[self.active_player])
         for coord in pieces:
