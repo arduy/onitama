@@ -30,6 +30,7 @@ class TestGame(unittest.TestCase):
         self.assertEqual(node.last_move.start, 20)
         self.assertEqual(node.last_move.end, 10)
         self.assertEqual(node.last_move.player, ai.BLUE)
+        self.assertEqual(node.last_move.card.name, 'tiger')
 
     def test_search(self):
         self.ai.generate_search_space(depth=3)

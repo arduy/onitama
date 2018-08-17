@@ -265,3 +265,4 @@ NAME_TO_CARD = {
     'frog': FROG,
     'rabbit': RABBIT,
 }
+CARD_TO_NAME = { value: key for key, value in NAME_TO_CARD.items() }
