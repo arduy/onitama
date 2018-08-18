@@ -1,4 +1,3 @@
-from enum import Enum
 from collections import defaultdict
 import re
 
@@ -30,8 +29,8 @@ class Board:
         #   Source and destination are in bounds
         #   Destination contains enemy piece or is empty
         try:
-            return (self.get(move.start).belongs_to(move.player)
-                    and not self.get(move.end).belongs_to(move.player))
+            return (Piece.belongs_to(self.get(move.start),move.player)
+                    and not Piece.belongs_to(self.get(move.end), move.player))
         except BoardBoundsError:
             return False
 
@@ -79,16 +78,16 @@ class Game:
         if self.validate_move(move):
             opp = Player.RED if move.player == Player.BLUE else Player.BLUE
             piece = self.board.get(move.start)
-            if piece.is_king():
+            if Piece.is_king(piece):
                 self.kings[move.player].remove(move.start)
                 self.kings[move.player].add(move.end)
-            elif piece.is_pawn():
+            elif Piece.is_pawn(piece):
                 self.pawns[move.player].remove(move.start)
                 self.pawns[move.player].add(move.end)
             dest_piece = self.board.get(move.end)
-            if dest_piece.is_king():
+            if Piece.is_king(dest_piece):
                 self.kings[opp].remove(move.end)
-            elif dest_piece.is_pawn():
+            elif Piece.is_pawn(dest_piece):
                 self.pawns[opp].remove(move.end)
             self.board.set(move.start, Piece.EMPTY)
             self.board.set(move.end, piece)
@@ -164,7 +163,7 @@ class Move:
     def parse_moves(start_player, move_string):
         try:
             result = []
-            players = [start_player, start_player.other()]
+            players = [start_player, Player.other(start_player)]
             moves = move_string.split(' ')
             x_codes = {'a': 0, 'b': 1, 'c': 2, 'd': 3, 'f': 4}
             y_codes = {'1': 0, '2': 1, '3': 2, '4': 3, '5': 4}
@@ -185,34 +184,38 @@ class Move:
             raise MoveParseError
 
 
-class Piece(Enum):
+class Piece:
     EMPTY = 0
     R_PAWN = 1
     R_KING = 2
     B_PAWN = 3
     B_KING = 4
 
-    def belongs_to(self, player):
+    @staticmethod
+    def belongs_to(piece, player):
         if player == Player.RED:
-            return (self == Piece.R_PAWN) or (self == Piece.R_KING)
+            return (piece == Piece.R_PAWN) or (piece == Piece.R_KING)
         elif player == Player.BLUE:
-            return (self == Piece.B_PAWN) or (self == Piece.B_KING)
+            return (piece == Piece.B_PAWN) or (piece == Piece.B_KING)
         else:
             return False
 
-    def is_pawn(self):
-        return self in {self.R_PAWN, self.B_PAWN}
+    @staticmethod
+    def is_pawn(piece):
+        return piece in {Piece.R_PAWN, Piece.B_PAWN}
 
-    def is_king(self):
-        return self in {self.R_KING, self.B_KING}
+    @staticmethod
+    def is_king(piece):
+        return piece in {Piece.R_KING, Piece.B_KING}
 
 
-class Player(Enum):
+class Player:
     RED = 0
     BLUE = 1
 
-    def other(self):
-        return Player.RED if self == Player.BLUE else Player.BLUE
+    @staticmethod
+    def other(player):
+        return Player.RED if player == Player.BLUE else Player.BLUE
 
 
 class Card:
