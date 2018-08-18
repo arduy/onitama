@@ -35,8 +35,12 @@ class TestGame(unittest.TestCase):
     def test_search(self):
         self.ai.generate_search_space(depth=3)
         self.assertEqual(len(self.ai.get_nodes(depth=0)), 1)
-        # self.assertEqual(len(self.ai.get_nodes(depth=1)), 5)
-        # self.assertEqual(len(self.ai.get_nodes(depth=2)), 25)
+        self.assertEqual(len(self.ai.get_nodes(depth=1)), 10)
+        self.assertEqual(len(self.ai.get_nodes(depth=2)), 100)
+        self.assertEqual(len(self.ai.get_nodes(depth=3)), 80*12 + 16*8)
+        self.assertEqual(
+            len(list(filter(lambda x: x.end, self.ai.get_nodes(depth=2)))), 4
+        )
 
 if __name__ == '__main__':
     unittest.main()

@@ -10,6 +10,10 @@ REDKING = 2
 BLUEPAWN = -1
 BLUEKING = -2
 
+# Goal square for kings (Reach goal and win game)
+REDGOAL = 22
+BLUEGOAL = 2
+
 class AI:
     def __init__(self, game):
         self.game = game
@@ -17,13 +21,65 @@ class AI:
         self.cards = tuple(card_from_onicard(card) for card in game.start_cards)
 
     def generate_search_space(self, depth):
-        pass
+        def apply_move(node, move):
+            new_board = node.board[:]
+            if move.player == BLUE:
+                if (new_board[move.end] == REDKING
+                    or (new_board[move.start] == BLUEKING and move.end == BLUEGOAL)):
+                    gameover = True
+                else:
+                    gameover = False
+            else:
+                if (new_board[move.end] == BLUEKING
+                    or (new_board[move.start] == REDKING and move.end == REDGOAL)):
+                    gameover = True
+                else:
+                    gameover = False
+            new_board[move.end] = new_board[move.start]
+            new_board[move.start] = EMPTY
+            new_cards = node.cards[:]
+            # Swap index(move.card) with index 4
+            new_cards[new_cards.index(move.card)] = new_cards[4]
+            new_cards[4] = move.card
+            return Node(
+                board=new_board,
+                last_move=move,
+                cards=new_cards,
+                children=[],
+                parent=node,
+                end=gameover,
+            )
+        def generate_children(node):
+            if not node.end:
+                if node.last_move is None:
+                    player = self.cards[4].start_player
+                else:
+                    player = (node.last_move.player+1) % 2
+                pieces = [REDPAWN, REDKING] if player == RED else [BLUEPAWN, BLUEKING]
+                start_squares = [i for i in range(25) if node.board[i] in pieces]
+                moves = [
+                    Move(start, start+disp, player, card)
+                    for start in start_squares
+                    for card in node.cards[player:player+2]
+                    for disp in self.cards[card][0][player]
+                    if start+disp in range(25)
+                ]
+                children = [
+                    apply_move(node, move) for move in moves
+                ]
+                node.children.clear()
+                node.children.extend(children)
+        frontier = [self.root]
+        for _ in range(depth):
+            for node in frontier:
+                generate_children(node)
+            frontier = [child for node in frontier for child in node.children]
 
     def get_nodes(self, depth):
-        if depth == 0:
-            return [self.root]
-        else:
-            return []
+        frontier = [self.root]
+        for _ in range(depth):
+            frontier = [child for node in frontier for child in node.children]
+        return frontier
 
 '''
 A board is a length 25 array of ints, each index i representing
@@ -36,7 +92,7 @@ Moves have start and end squares as integers (same convention) with
 the player performing the move identified by RED = 0, BLUE = 1
 '''
 
-Node = namedtuple('Node', ['board', 'last_move', 'cards', 'children', 'parent'])
+Node = namedtuple('Node', ['board', 'last_move', 'cards', 'children', 'parent', 'end'])
 Move = namedtuple('Move', ['start', 'end', 'player', 'card'])
 Card = namedtuple('Card', ['moves', 'start_player', 'name'])
 
@@ -71,5 +127,6 @@ def node_from_game(game):
         last_move=None if len(game.moves) == 0 else move_from_onimove(game.moves[-1]),
         cards=[game.start_cards.index(card) for card in cards],
         children=[],
-        parent=None
+        parent=None,
+        end=True if game.check_victory() is not None else False,
     )
