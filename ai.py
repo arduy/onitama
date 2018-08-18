@@ -22,25 +22,25 @@ class AI:
 
     def generate_search_space(self, depth):
         def apply_move(node, move):
-            new_board = node.board[:]
-            if move.player == BLUE:
-                if (new_board[move.end] == REDKING
-                    or (new_board[move.start] == BLUEKING and move.end == BLUEGOAL)):
+            new_board = node[0][:]
+            if move[2] == BLUE:
+                if (new_board[move[1]] == REDKING
+                    or (new_board[move[0]] == BLUEKING and move[1] == BLUEGOAL)):
                     gameover = True
                 else:
                     gameover = False
             else:
-                if (new_board[move.end] == BLUEKING
-                    or (new_board[move.start] == REDKING and move.end == REDGOAL)):
+                if (new_board[move[1]] == BLUEKING
+                    or (new_board[move[0]] == REDKING and move[1] == REDGOAL)):
                     gameover = True
                 else:
                     gameover = False
-            new_board[move.end] = new_board[move.start]
-            new_board[move.start] = EMPTY
-            new_cards = node.cards[:]
+            new_board[move[1]] = new_board[move[0]]
+            new_board[move[0]] = EMPTY
+            new_cards = node[2][:]
             # Swap index(move.card) with index 4
-            new_cards[new_cards.index(move.card)] = new_cards[4]
-            new_cards[4] = move.card
+            new_cards[new_cards.index(move[3])] = new_cards[4]
+            new_cards[4] = move[3]
             return Node(
                 board=new_board,
                 last_move=move,
@@ -50,14 +50,14 @@ class AI:
                 end=gameover,
             )
         def generate_children(node):
-            if not node.end:
-                if node.last_move is None:
+            if not node[5]:
+                if node[1] is None:
                     player = self.cards[4].start_player
                 else:
-                    player = (node.last_move.player+1) % 2
+                    player = (node[1].player+1) % 2
                 pieces = [REDPAWN, REDKING] if player == RED else [BLUEPAWN, BLUEKING]
-                start_squares = [i for i in range(25) if node.board[i] in pieces]
-                player_cards = node.cards[player*2:player*2+2]
+                start_squares = [i for i in range(25) if node[0][i] in pieces]
+                player_cards = node[2][player*2:player*2+2]
                 moves = [
                     Move(start, start+disp, player, card)
                     for start in start_squares
@@ -68,18 +68,18 @@ class AI:
                 children = [
                     apply_move(node, move) for move in moves
                 ]
-                node.children.clear()
-                node.children.extend(children)
+                node[3].clear()
+                node[3].extend(children)
         frontier = [self.root]
         for _ in range(depth):
             for node in frontier:
                 generate_children(node)
-            frontier = [child for node in frontier for child in node.children]
+            frontier = [child for node in frontier for child in node[3]]
 
     def get_nodes(self, depth):
         frontier = [self.root]
         for _ in range(depth):
-            frontier = [child for node in frontier for child in node.children]
+            frontier = [child for node in frontier for child in node[3]]
         return frontier
 
 '''
