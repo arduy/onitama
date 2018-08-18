@@ -10,7 +10,13 @@ depth = int(sys.argv[1])
 def compute():
     ai.generate_search_space(depth=depth)
 
-print(timeit.timeit(stmt=compute, number=1))
+time = timeit.timeit(stmt=compute, number=1)
+print('{} seconds'.format(time))
 
-print(sum(map(lambda x: sys.getsizeof(x), ai.get_nodes(depth=depth))))
-print(len(ai.get_nodes(depth=depth)))
+# print(sum(map(lambda x: sys.getsizeof(x), ai.get_nodes(depth=depth))))
+
+nodes = 0
+for i in range(depth+1):
+    nodes += len(ai.get_nodes(i))
+print('{} nodes'.format(nodes))
+print('{} kilonodes/s'.format(nodes/time/1000))
