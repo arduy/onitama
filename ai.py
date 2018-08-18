@@ -63,7 +63,7 @@ class AI:
                     for start in start_squares
                     for card in player_cards
                     for disp in self.cards[card][0][player]
-                    if start+disp in range(25)
+                    if start+disp in range(25) and start+disp not in start_squares
                 ]
                 children = [
                     apply_move(node, move) for move in moves
