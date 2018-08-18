@@ -68,7 +68,7 @@ class AI:
                 children = [
                     apply_move(node, move) for move in moves
                 ]
-                node[3].clear()
+                del node[3][:]
                 node[3].extend(children)
         frontier = [self.root]
         for _ in range(depth):
