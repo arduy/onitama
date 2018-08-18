@@ -57,10 +57,11 @@ class AI:
                     player = (node.last_move.player+1) % 2
                 pieces = [REDPAWN, REDKING] if player == RED else [BLUEPAWN, BLUEKING]
                 start_squares = [i for i in range(25) if node.board[i] in pieces]
+                player_cards = node.cards[player*2:player*2+2]
                 moves = [
                     Move(start, start+disp, player, card)
                     for start in start_squares
-                    for card in node.cards[player:player+2]
+                    for card in player_cards
                     for disp in self.cards[card][0][player]
                     if start+disp in range(25)
                 ]
