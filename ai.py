@@ -59,11 +59,11 @@ class AI:
                 start_squares = [i for i in range(25) if node[0][i] in pieces]
                 player_cards = node[2][player*2:player*2+2]
                 moves = [
-                    Move(start, start+disp, player, card)
+                    Move(start, end, player, card)
                     for start in start_squares
                     for card in player_cards
-                    for disp in self.cards[card][0][player]
-                    if start+disp in range(25) and start+disp not in start_squares
+                    for end in self.cards[card][0][player][start]
+                    if end not in start_squares
                 ]
                 children = [
                     apply_move(node, move) for move in moves
@@ -91,6 +91,9 @@ See above for integer meanings (EMPTY = 0, REDPAWN = 1, etc)
 
 Moves have start and end squares as integers (same convention) with
 the player performing the move identified by RED = 0, BLUE = 1
+
+Card.moves is an array of arrays where obj.moves[i] contains all legal destination
+squares for a move starting on square i
 '''
 
 Node = namedtuple('Node', ['board', 'last_move', 'cards', 'children', 'parent', 'end'])
@@ -98,8 +101,14 @@ Move = namedtuple('Move', ['start', 'end', 'player', 'card'])
 Card = namedtuple('Card', ['moves', 'start_player', 'name'])
 
 def card_from_onicard(card):
-    red_moves = set(c[0]+c[1]*5 for c in card.moves[oni.Player.RED])
-    blue_moves = set(c[0]+c[1]*5 for c in card.moves[oni.Player.BLUE])
+    red_disps = [c[0]+c[1]*5 for c in card.moves[oni.Player.RED]]
+    blue_disps = [c[0]+c[1]*5 for c in card.moves[oni.Player.BLUE]]
+    red_moves = tuple(
+        tuple(i+d for d in red_disps if i+d in range(25)) for i in range(25)
+    )
+    blue_moves = tuple(
+        tuple(i+d for d in blue_disps if i+d in range(25)) for i in range(25)
+    )
     return Card(
         moves=(red_moves, blue_moves),
         start_player=RED if card.start_player == oni.Player.RED else BLUE,
