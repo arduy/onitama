@@ -1,6 +1,6 @@
 import unittest
 import onitama as oni
-import ai
+import ai, ai2
 
 class TestGame(unittest.TestCase):
     def setUp(self):
@@ -41,6 +41,15 @@ class TestGame(unittest.TestCase):
         self.assertEqual(
             len(list(filter(lambda x: x.end, self.ai.get_nodes(depth=2)))), 4
         )
+
+    def test_ai2(self):
+        ai = ai2.AI()
+        ai.set_game_as_root(self.game)
+        ai.evaluate_to_depth(3)
+        self.assertEqual(len(ai.get_nodes(depth=0)), 1)
+        self.assertEqual(len(ai.get_nodes(depth=1)), 10)
+        self.assertEqual(len(ai.get_nodes(depth=2)), 100)
+        self.assertEqual(len(ai.get_nodes(depth=3)), 80*12 + 16*8)
 
 if __name__ == '__main__':
     unittest.main()
