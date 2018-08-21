@@ -98,16 +98,22 @@ squares for a move starting on square i
 class Node:
     __slots__ = ['board', 'prev_move', 'cards', 'children', 'parent', 'end', 'eval']
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def __init__(self, board, prev_move, cards, children, parent, end):
+        self.board = board
+        self.prev_move = prev_move
+        self.cards = cards
+        self.children = children
+        self.parent = parent
+        self.end = end
 
 class Move:
     __slots__ = ['start', 'end', 'source', 'target', 'player', 'card', 'neutral_card']
 
-    def __init__(self, **kwargs):
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+    def __init__(self, start, end, player, card):
+        self.start = start
+        self.end = end
+        self.player = player
+        self.card = card
 
 class Card:
     __slots__ = ['moves', 'start_player', 'name']
