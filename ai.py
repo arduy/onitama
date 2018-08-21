@@ -37,10 +37,9 @@ class AI:
     def mock_search(self, depth):
         def generate_children(node):
             if not node.end:
-                children = [
+                node.children = [
                     node.apply_move(move) for move in self.next_moves(node)
-                ]  
-                node.children[:] = children
+                ]
         frontier = [self.root]
         for _ in range(depth):
             for node in frontier:
