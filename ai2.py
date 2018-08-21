@@ -28,14 +28,12 @@ class AI:
             for card in game.cards[oni.Player.RED]+game.cards[oni.Player.BLUE]+[game.neutral_card]
         ]
         self.active_player = RED if game.active_player == RED else BLUE
-        eval = self.evaluate_current()
-        next_moves = self.next_moves()
         self.root = Node(
-            eval=eval,
             prev_move=None,
             children=[],
             parent=None,
-            end=True if game.check_victory() is not None else False
+            end=True if game.check_victory() is not None else False,
+            eval=0,
         )
 
     def next_moves(self):
@@ -78,25 +76,25 @@ class AI:
         self.cards[4] = move[5]
         self.active_player = (self.active_player+1)%2
 
-    def evaluate_to_depth(self, depth):
-        def evaluate_children(start_node, depth):
+    def mock_search(self, depth):
+        def search_children(start_node, depth):
             if depth <= 0 or start_node[4]:
                 return
             moves = self.next_moves()
-            children = [None for _ in range(len(moves))]
+            children = [0 for _ in range(len(moves))]
             for i, move in enumerate(moves):
                 gameover = self.do_move(move)
                 children[i] = Node(
-                    eval=self.evaluate_current(),
                     prev_move=move,
                     children=[],
                     parent=start_node,
                     end=gameover,
+                    eval=0
                 )
-                evaluate_children(children[i], depth-1)
+                search_children(children[i], depth-1)
                 self.undo_move(move)
             start_node[2][:] = children
-        evaluate_children(self.root, depth)
+        search_children(self.root, depth)
 
     def get_nodes(self, depth):
         nodes = [self.root]
@@ -133,5 +131,4 @@ def convert_board(board):
         oni.Piece.B_PAWN: BLUEPAWN,
         oni.Piece.B_KING: BLUEKING,
     }
-    # return array.array('b', [pieces[p] for p in board])
     return [pieces[p] for p in board]
