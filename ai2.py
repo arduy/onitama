@@ -1,6 +1,5 @@
 import onitama as oni
 from collections import namedtuple
-import array
 
 RED = 0
 BLUE = 1
@@ -83,7 +82,7 @@ class AI:
             if depth <= 0 or start_node[4]:
                 return
             moves = self.next_moves()
-            children = [None for _ in range(len(moves))]
+            children = [0 for _ in range(len(moves))]
             for i, move in enumerate(moves):
                 gameover = self.do_move(move)
                 children[i] = Node(
@@ -133,5 +132,4 @@ def convert_board(board):
         oni.Piece.B_PAWN: BLUEPAWN,
         oni.Piece.B_KING: BLUEKING,
     }
-    # return array.array('b', [pieces[p] for p in board])
     return [pieces[p] for p in board]
