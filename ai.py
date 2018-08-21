@@ -22,64 +22,63 @@ class AI:
 
     def generate_search_space(self, depth):
         def apply_move(node, move):
-            new_board = node[0][:]
-            if move[2] == BLUE:
-                if (new_board[move[1]] == REDKING
-                    or (new_board[move[0]] == BLUEKING and move[1] == BLUEGOAL)):
+            new_board = node.board[:]
+            if move.player == BLUE:
+                if (new_board[move.end] == REDKING
+                    or (new_board[move.start] == BLUEKING and move.end == BLUEGOAL)):
                     gameover = True
                 else:
                     gameover = False
             else:
-                if (new_board[move[1]] == BLUEKING
-                    or (new_board[move[0]] == REDKING and move[1] == REDGOAL)):
+                if (new_board[move.end] == BLUEKING
+                    or (new_board[move.start] == REDKING and move.end == REDGOAL)):
                     gameover = True
                 else:
                     gameover = False
-            new_board[move[1]] = new_board[move[0]]
-            new_board[move[0]] = EMPTY
-            new_cards = node[2][:]
+            new_board[move.end] = new_board[move.start]
+            new_board[move.start] = EMPTY
+            new_cards = node.cards[:]
             # Swap index(move.card) with index 4
-            new_cards[new_cards.index(move[3])] = new_cards[4]
-            new_cards[4] = move[3]
+            new_cards[new_cards.index(move.card)] = new_cards[4]
+            new_cards[4] = move.card
             return Node(
                 board=new_board,
-                last_move=move,
+                prev_move=move,
                 cards=new_cards,
                 children=[],
                 parent=node,
                 end=gameover,
             )
         def generate_children(node):
-            if not node[5]:
-                if node[1] is None:
+            if not node.end:
+                if node.prev_move is None:
                     player = self.cards[4].start_player
                 else:
-                    player = (node[1].player+1) % 2
+                    player = (node.prev_move.player+1) % 2
                 pieces = [REDPAWN, REDKING] if player == RED else [BLUEPAWN, BLUEKING]
-                start_squares = [i for i in range(25) if node[0][i] in pieces]
-                player_cards = node[2][player*2:player*2+2]
+                start_squares = [i for i in range(25) if node.board[i] in pieces]
+                player_cards = node.cards[player*2:player*2+2]
                 moves = [
-                    Move(start, end, player, card)
+                    Move(start=start, end=end, player=player, card=card)
                     for start in start_squares
                     for card in player_cards
-                    for end in self.cards[card][0][player][start]
+                    for end in self.cards[card].moves[player][start]
                     if end not in start_squares
                 ]
                 children = [
                     apply_move(node, move) for move in moves
                 ]
-                del node[3][:]
-                node[3].extend(children)
+                node.children[:] = children
         frontier = [self.root]
         for _ in range(depth):
             for node in frontier:
                 generate_children(node)
-            frontier = [child for node in frontier for child in node[3]]
+            frontier = [child for node in frontier for child in node.children]
 
     def get_nodes(self, depth):
         frontier = [self.root]
         for _ in range(depth):
-            frontier = [child for node in frontier for child in node[3]]
+            frontier = [child for node in frontier for child in node.children]
         return frontier
 
 '''
@@ -96,9 +95,26 @@ Card.moves is an array of arrays where obj.moves[i] contains all legal destinati
 squares for a move starting on square i
 '''
 
-Node = namedtuple('Node', ['board', 'last_move', 'cards', 'children', 'parent', 'end'])
-Move = namedtuple('Move', ['start', 'end', 'player', 'card'])
-Card = namedtuple('Card', ['moves', 'start_player', 'name'])
+class Node:
+    __slots__ = ['board', 'prev_move', 'cards', 'children', 'parent', 'end', 'eval']
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class Move:
+    __slots__ = ['start', 'end', 'source', 'target', 'player', 'card', 'neutral_card']
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+class Card:
+    __slots__ = ['moves', 'start_player', 'name']
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
 def card_from_onicard(card):
     red_disps = [c[0]+c[1]*5 for c in card.moves[oni.Player.RED]]
@@ -134,7 +150,7 @@ def node_from_game(game):
     cards = game.cards[oni.Player.RED] + game.cards[oni.Player.BLUE] + [game.neutral_card]
     return Node(
         board=[pieces[p] for p in game.board.array],
-        last_move=None if len(game.moves) == 0 else move_from_onimove(game.moves[-1]),
+        prev_move=None if len(game.moves) == 0 else move_from_onimove(game.moves[-1]),
         cards=[game.start_cards.index(card) for card in cards],
         children=[],
         parent=None,
