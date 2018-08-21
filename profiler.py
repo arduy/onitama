@@ -5,16 +5,17 @@ from ai import AI
 import ai2
 
 game = oni.Game(start_cards=oni.ALL_CARDS[0:5])
-ai = AI(game=game)
+ai = AI()
+ai.set_game_as_root(game)
 ai2 = ai2.AI()
 ai2.set_game_as_root(game)
 depth = int(sys.argv[1])
 
 def compute():
-    ai.generate_search_space(depth=depth)
+    ai.mock_search(depth=depth)
 
 def compute2():
-    ai2.evaluate_to_depth(depth=depth)
+    ai2.mock_search(depth=depth)
 
 time = timeit.timeit(stmt=compute, number=1)
 print('{} seconds'.format(time))
