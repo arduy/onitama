@@ -12,7 +12,7 @@ ai2.set_game_as_root(game)
 depth = int(sys.argv[1])
 
 def compute():
-    ai.mock_search(depth=depth)
+    ai.mock_search(depth=depth, mode=sys.argv[2])
 
 def compute2():
     ai2.mock_search(depth=depth)

@@ -52,7 +52,7 @@ class AI:
         # stub method
         return 0
 
-    def do_move(self, move):
+    def do_move(self, move, node):
         source = self.board[move.start]
         if source == REDKING and move.end == REDGOAL:
             gameover = True
@@ -67,7 +67,13 @@ class AI:
         self.cards[self.cards.index(move.card)] = self.cards[4]
         self.cards[4] = move.card
         self.active_player = (self.active_player+1)%2
-        return gameover
+        return Node(
+            prev_move = move,
+            children=[],
+            parent=node,
+            end=gameover,
+            eval=0,
+        )
 
     def undo_move(self, move):
         self.board[move.start] = self.board[move.end]
@@ -83,14 +89,7 @@ class AI:
             moves = self.next_moves()
             start_node.children = [0 for _ in range(len(moves))]
             for i, move in enumerate(moves):
-                gameover = self.do_move(move)
-                start_node.children[i] = Node(
-                    prev_move=move,
-                    children=[],
-                    parent=start_node,
-                    end=gameover,
-                    eval=0
-                )
+                start_node.children[i] = self.do_move(move, start_node)
                 search_children(start_node.children[i], depth-1)
                 self.undo_move(move)
         search_children(self.root, depth)

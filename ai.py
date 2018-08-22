@@ -34,11 +34,48 @@ class AI:
             end=False if game.check_victory() is None else True,
         )
 
-    def mock_search(self, depth):
+    def do_move(self, move, node):
+        new_board = node.board[:]
+        if move.player == BLUE:
+            if (new_board[move.end] == REDKING
+                or (new_board[move.start] == BLUEKING and move.end == BLUEGOAL)):
+                gameover = True
+            else:
+                gameover = False
+        else:
+            if (new_board[move.end] == BLUEKING
+                or (new_board[move.start] == REDKING and move.end == REDGOAL)):
+                gameover = True
+            else:
+                gameover = False
+        new_board[move.end] = new_board[move.start]
+        new_board[move.start] = EMPTY
+        new_cards = node.cards[:]
+        # Swap index(move.card) with index 4
+        new_cards[new_cards.index(move.card)] = new_cards[4]
+        new_cards[4] = move.card
+        return Node(
+            board=new_board,
+            prev_move=move,
+            cards=new_cards,
+            children=[],
+            parent=node,
+            end=gameover,
+        )
+
+    def mock_search(self, depth, mode):
+        if mode == 'b':
+            self._breadth_first(depth)
+        elif mode == 'd':
+            self._depth_first(depth)
+        else:
+            raise Exception('Invalid search mode')
+
+    def _breadth_first(self, depth):
         def generate_children(node):
             if not node.end:
                 node.children = [
-                    node.apply_move(move) for move in self.next_moves(node)
+                    self.do_move(move, node) for move in self.next_moves(node)
                 ]
         frontier = [self.root]
         for _ in range(depth):
@@ -46,14 +83,14 @@ class AI:
                 generate_children(node)
             frontier = [child for node in frontier for child in node.children]
 
-    def mock_search_depth_first(self, depth):
+    def _depth_first(self, depth):
         def search_children(start_node, depth):
             if depth <= 0 or start_node.end:
                 return
             moves = self.next_moves(start_node)
             start_node.children = [0 for _ in range(len(moves))]
             for i, move in enumerate(moves):
-                start_node.children[i] = start_node.apply_move(move)
+                start_node.children[i] = self.do_move(move, start_node)
                 search_children(start_node.children[i], depth-1)
         search_children(self.root, depth)
 
@@ -104,37 +141,8 @@ class Node:
         self.parent = parent
         self.end = end
 
-    def apply_move(self, move):
-        new_board = self.board[:]
-        if move.player == BLUE:
-            if (new_board[move.end] == REDKING
-                or (new_board[move.start] == BLUEKING and move.end == BLUEGOAL)):
-                gameover = True
-            else:
-                gameover = False
-        else:
-            if (new_board[move.end] == BLUEKING
-                or (new_board[move.start] == REDKING and move.end == REDGOAL)):
-                gameover = True
-            else:
-                gameover = False
-        new_board[move.end] = new_board[move.start]
-        new_board[move.start] = EMPTY
-        new_cards = self.cards[:]
-        # Swap index(move.card) with index 4
-        new_cards[new_cards.index(move.card)] = new_cards[4]
-        new_cards[4] = move.card
-        return Node(
-            board=new_board,
-            prev_move=move,
-            cards=new_cards,
-            children=[],
-            parent=self,
-            end=gameover,
-        )
-
 class Move:
-    __slots__ = ['start', 'end', 'source', 'target', 'player', 'card', 'neutral_card']
+    __slots__ = ['start', 'end', 'player', 'card']
 
     def __init__(self, start, end, player, card):
         self.start = start
