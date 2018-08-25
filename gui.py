@@ -107,6 +107,20 @@ class GUI():
         for i in range(5):
             c = coords[i]
             self.draw_card(c[0], c[1], cards[i], players[i])
+            if i >= 2:
+                self.card_canvas.create_text(
+                    c[0]+self.card_size/2,
+                    c[1],
+                    text=cards[i].name(),
+                    anchor='s'
+                )
+            else:
+                self.card_canvas.create_text(
+                    c[0]+self.card_size/2,
+                    c[1]+self.card_size,
+                    text=cards[i].name(),
+                    anchor='n'
+                )
 
 
     def draw_card(self, x, y, card, player):
