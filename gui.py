@@ -1,5 +1,6 @@
 from tkinter import *
 from PIL import ImageTk, Image
+from math import floor
 import onitama as oni
 
 class GUI():
@@ -26,7 +27,9 @@ class GUI():
             height=self.board_size,
         )
         self.card_canvas.pack(side=LEFT, padx=10, pady=10)
+        self.card_canvas.bind('<Button-1>', self.card_click)
         self.board_canvas.pack(side=LEFT, padx=10, pady=10)
+        self.board_canvas.bind('<Button-1>', self.board_click)
         self.draw_board()
         images = {
             name: Image.open('./pieces/{}.png'.format(name)).resize((self.square_size, self.square_size), Image.ANTIALIAS)
@@ -36,6 +39,19 @@ class GUI():
             name: ImageTk.PhotoImage(image)
             for name, image in images.items()
         }
+
+    def set_game(self, game):
+        self.game = game
+        self.card_names = [card.name() for card in game.start_cards]
+        self.update()
+
+    def update(self):
+        self.draw_pieces(self.game.board.array)
+        self.draw_cards(
+            red=self.game.cards[oni.Player.RED],
+            blue=self.game.cards[oni.Player.BLUE],
+            neutral=self.game.neutral_card
+        )
 
 
     def draw_board(self):
@@ -143,16 +159,42 @@ class GUI():
                     x+(col+1)*unit,
                     y+(row+1)*unit,
                     fill=color,
-                    tags=('card')
+                    tags=('card', card.name())
                 )
+
+    def board_click(self, event):
+        canvas = event.widget
+        x = canvas.canvasx(event.x)
+        y = canvas.canvasy(event.y)
+        print('clicked square: ({},{})'.format(floor(x/self.square_size),4 - floor(y/self.square_size)))
+
+    def card_click(self, event):
+        canvas = event.widget
+        x = canvas.canvasx(event.x)
+        y = canvas.canvasy(event.y)
+        try:
+            item = canvas.find_overlapping(x+0,y+0,x+1,y+1)[0]
+        except IndexError:
+            print('clicked empty')
+            return
+        tags = canvas.gettags(item)
+        card_name = None
+        for tag in tags:
+            if tag in self.card_names:
+                card_name = tag
+                break
+        if card_name is not None:
+            print('clicked card: {}'.format(card_name))
+        else:
+            print('no card found')
+
 
 def main():
     root = Tk()
     root.title('Board')
     gui = GUI(root,flip=False)
     game = oni.Game(oni.ALL_CARDS[0:5])
-    gui.draw_pieces(game.board.array)
-    gui.draw_cards(game.cards[oni.Player.RED], game.cards[oni.Player.BLUE], game.neutral_card)
+    gui.set_game(game)
     root.mainloop()
 
 if __name__ == '__main__':
