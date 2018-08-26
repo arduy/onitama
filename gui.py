@@ -156,9 +156,9 @@ class GUI():
         for col in range(5):
             for row in range(5):
                 if (col, row) == (2,2):
-                    color = 'darkgrey'
-                elif (col, 4-row) in squares:
                     color = '#80ff80'
+                elif (col, 4-row) in squares:
+                    color = 'yellow'
                 else:
                     color = 'white'
                 self.card_canvas.create_rectangle(
@@ -218,7 +218,7 @@ class GUI():
         if self.selected is None:
             if coordinate in self.game.legal_move_starts():
                 self.selected = coordinate
-                self.highlight_square(coordinate, 'yellow')
+                self.highlight_square(coordinate, '#80ff80')
                 self.highlight_targets()
         elif self.target is None:
             if coordinate in self.game.legal_move_targets(self.selected):
@@ -235,7 +235,7 @@ class GUI():
             elif coordinate in self.game.legal_move_starts():
                 self.undo_highlights()
                 self.selected = coordinate
-                self.highlight_square(coordinate, 'yellow')
+                self.highlight_square(coordinate, '#80ff80')
                 self.highlight_targets()
             else:
                 self.undo_highlights()
