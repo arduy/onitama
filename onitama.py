@@ -134,6 +134,22 @@ class Game:
                 result[card][coord] = result[card][coord].union(end_coords)
         return result
 
+    def legal_move_starts(self):
+        result = set()
+        for x in self.legal_moves().values():
+            for key, value in x.items():
+                if value is not None and len(value) != 0:
+                    result.add(key)
+        return result
+
+    def get_card_choices_for_move(self, start, end):
+        cards = []
+        lm = self.legal_moves()
+        for card in self.cards[self.active_player]:
+            if end in lm[card][start]:
+                cards.append(card)
+        return cards
+
 
 class IllegalMoveError(Exception):
     pass
