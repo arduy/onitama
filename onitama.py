@@ -142,6 +142,13 @@ class Game:
                     result.add(key)
         return result
 
+    def legal_move_targets(self, start):
+        return [
+            target
+            for moves in self.legal_moves().values()
+            for target in moves.get(start)
+        ]
+
     def get_card_choices_for_move(self, start, end):
         cards = []
         lm = self.legal_moves()

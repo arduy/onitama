@@ -204,7 +204,7 @@ class GUI():
                 for moves in self.game.legal_moves().values()
                 for target in moves.get(self.selected)
             ]
-            for target in legal_targets:
+            for target in self.game.legal_move_targets(self.selected):
                 self.highlight_square(target, 'yellow')
 
     def undo_highlights(self):
@@ -221,12 +221,7 @@ class GUI():
                 self.highlight_square(coordinate, 'yellow')
                 self.highlight_targets()
         elif self.target is None:
-            legal_targets = [
-                target
-                for moves in self.game.legal_moves().values()
-                for target in moves.get(self.selected)
-            ]
-            if coordinate in legal_targets:
+            if coordinate in self.game.legal_move_targets(self.selected):
                 self.target = coordinate
                 card_choices = self.game.get_card_choices_for_move(self.selected, self.target)
                 if len(card_choices) == 2:
