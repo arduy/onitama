@@ -39,9 +39,13 @@ class GUI():
             name: ImageTk.PhotoImage(image)
             for name, image in images.items()
         }
+        self.selected = None
+        self.target = None
 
-    def set_game(self, game):
+
+    def set_game(self, game, user):
         self.game = game
+        self.user = user
         self.card_names = [card.name() for card in game.start_cards]
         self.update()
 
@@ -74,13 +78,15 @@ class GUI():
                     color = '#ffcccc'
                 else:
                     color = colors[(col+row)%2]
+                coord_tag = '{},{}'.format(str(col),str(4-row))
                 self.board_canvas.create_rectangle(
                     col*self.square_size+self.inset,
                     row*self.square_size+self.inset,
                     (col+1)*self.square_size+self.inset,
                     (row+1)*self.square_size+self.inset,
                     width=2,
-                    fill=color
+                    fill=color,
+                    tags=(coord_tag,color)
                 )
 
     def draw_pieces(self, pieces):
@@ -128,14 +134,16 @@ class GUI():
                     c[0]+self.card_size/2,
                     c[1],
                     text=cards[i].name(),
-                    anchor='s'
+                    anchor='s',
+                    tags=('card',)
                 )
             else:
                 self.card_canvas.create_text(
                     c[0]+self.card_size/2,
                     c[1]+self.card_size,
                     text=cards[i].name(),
-                    anchor='n'
+                    anchor='n',
+                    tags=('card',)
                 )
 
 
@@ -166,7 +174,8 @@ class GUI():
         canvas = event.widget
         x = canvas.canvasx(event.x)
         y = canvas.canvasy(event.y)
-        print('clicked square: ({},{})'.format(floor(x/self.square_size),4 - floor(y/self.square_size)))
+        coord = (floor(x/self.square_size), 4 - floor(y/self.square_size))
+        self.select_square(coord)
 
     def card_click(self, event):
         canvas = event.widget
@@ -175,26 +184,90 @@ class GUI():
         try:
             item = canvas.find_overlapping(x+0,y+0,x+1,y+1)[0]
         except IndexError:
-            print('clicked empty')
             return
         tags = canvas.gettags(item)
-        card_name = None
         for tag in tags:
             if tag in self.card_names:
-                card_name = tag
+                self.select_card(tag)
                 break
-        if card_name is not None:
-            print('clicked card: {}'.format(card_name))
-        else:
-            print('no card found')
 
+    def highlight_square(self, coordinate, color):
+        coord_tag = '{},{}'.format(str(coordinate[0]), str(coordinate[1]))
+        item = self.board_canvas.find_withtag(coord_tag)
+        tags = self.board_canvas.gettags(item)[0:2]
+        self.board_canvas.itemconfig(item, fill=color, tags=tags+('highlight',))
+
+    def highlight_targets(self):
+        if self.selected is not None:
+            legal_targets = [
+                target
+                for moves in self.game.legal_moves().values()
+                for target in moves.get(self.selected)
+            ]
+            for target in legal_targets:
+                self.highlight_square(target, 'yellow')
+
+    def undo_highlights(self):
+        highlighted = self.board_canvas.find_withtag('highlight')
+        for item in highlighted:
+            tags = self.board_canvas.gettags(item)[0:2]
+            old_color = tags[1]
+            self.board_canvas.itemconfig(item, fill=old_color)
+
+    def select_square(self, coordinate):
+        if self.selected is None:
+            if coordinate in self.game.legal_move_starts():
+                self.selected = coordinate
+                self.highlight_square(coordinate, 'yellow')
+                self.highlight_targets()
+        elif self.target is None:
+            legal_targets = [
+                target
+                for moves in self.game.legal_moves().values()
+                for target in moves.get(self.selected)
+            ]
+            if coordinate in legal_targets:
+                self.target = coordinate
+                card_choices = self.game.get_card_choices_for_move(self.selected, self.target)
+                if len(card_choices) == 2:
+                    # Player needs to choose a card
+                    self.highlight_square(coordinate, 'red')
+                else:
+                    self.select_card(card_choices[0].name())
+            elif coordinate == self.selected:
+                self.undo_highlights()
+                self.selected = None
+            elif coordinate in self.game.legal_move_starts():
+                self.undo_highlights()
+                self.selected = coordinate
+                self.highlight_square(coordinate, 'yellow')
+                self.highlight_targets()
+            else:
+                self.undo_highlights()
+                self.selected = None
+
+    def select_card(self, card_name):
+        if self.selected is not None and self.target is not None:
+            move = oni.Move(
+                player=self.game.active_player,
+                start=self.selected,
+                end=self.target,
+                card=oni.NAME_TO_CARD[card_name],
+            )
+            try:
+                self.game.do_move(move)
+            except oni.IllegalMoveError:
+                print('Illegal move')
+            self.selected, self.target = None, None
+            self.undo_highlights()
+            self.update()
 
 def main():
     root = Tk()
     root.title('Board')
     gui = GUI(root,flip=False)
     game = oni.Game(oni.ALL_CARDS[0:5])
-    gui.set_game(game)
+    gui.set_game(game, oni.Player.RED)
     root.mainloop()
 
 if __name__ == '__main__':
