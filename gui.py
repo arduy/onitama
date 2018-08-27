@@ -303,12 +303,17 @@ class GUI():
 
     def select_card(self, card_name):
         if self.selected is not None and self.target is not None:
-            move = oni.Move(
-                player=self.game.active_player,
-                start=self.selected,
-                end=self.target,
-                card=oni.NAME_TO_CARD[card_name],
-            )
+            card = oni.NAME_TO_CARD[card_name]
+            if card in self.game.cards[self.game.active_player]:
+                move = oni.Move(
+                    player=self.game.active_player,
+                    start=self.selected,
+                    end=self.target,
+                    card=oni.NAME_TO_CARD[card_name],
+                )
+            else:
+                # Bad card selection
+                return
             try:
                 self.game.do_move(move)
                 self.undo_highlights()
