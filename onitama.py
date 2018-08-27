@@ -247,6 +247,9 @@ class Player(Enum):
     def other(self):
         return Player.RED if self == Player.BLUE else Player.BLUE
 
+    def color(self):
+        return 'red' if self == Player.RED else 'blue'
+
 
 class Card:
     def __init__(self, coordinates, start_player):

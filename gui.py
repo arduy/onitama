@@ -10,25 +10,49 @@ class GUI():
     inset = 5
     dark = '#f5deb3'
     light = '#ffffe0'
+    blue = '#33adff'
+    red = '#ff4d4d'
+    green = '#80ff80'
+    lightgreen = '#ccffcc'
     piece_names = ['redpawn', 'bluepawn', 'redking', 'blueking']
     card_size = 110
     board_size = 5*square_size+2*inset
+    padding = 10
+    card_canvas_width = card_size*2+3*inset
+    card_canvas_height = board_size
+    center_frame_width = board_size + card_canvas_width + 4*padding
+    center_frame_height = board_size + padding*2
     def __init__(self, parent, flip=False):
         self.parent = parent
         self.flip = flip
-        self.board_canvas = Canvas(
+        self.center_frame = Frame(
             parent,
+            width=self.center_frame_width,
+            height=self.center_frame_height,
+        )
+        self.board_canvas = Canvas(
+            self.center_frame,
             width=self.board_size,
             height=self.board_size,
         )
         self.card_canvas = Canvas(
-            parent,
+            self.center_frame,
             width=self.card_size*2+3*self.inset,
             height=self.board_size,
         )
-        self.card_canvas.pack(side=LEFT, padx=10, pady=10)
+        self.status_frame = Frame(
+            parent,
+        )
+        self.status_label = Label(
+            self.status_frame,
+            text="Welcome",
+        )
+        self.status_label.pack(side=BOTTOM)
+        self.status_frame.pack(side=TOP, fill='x')
+        self.center_frame.pack(side=BOTTOM)
+        self.card_canvas.pack(side=LEFT, padx=self.padding, pady=self.padding)
         self.card_canvas.bind('<Button-1>', self.card_click)
-        self.board_canvas.pack(side=LEFT, padx=10, pady=10)
+        self.board_canvas.pack(side=LEFT, padx=self.padding, pady=self.padding)
         self.board_canvas.bind('<Button-1>', self.board_click)
         self.draw_board()
         images = {
@@ -41,6 +65,7 @@ class GUI():
         }
         self.selected = None
         self.target = None
+
 
 
     def set_game(self, game, user):
@@ -56,7 +81,27 @@ class GUI():
             blue=self.game.cards[oni.Player.BLUE],
             neutral=self.game.neutral_card
         )
+        self.update_status()
 
+    def update_status(self):
+        if self.game.check_victory() is None:
+            if self.game.active_player == oni.Player.RED:
+                self.status_label.config(
+                    text='Red to move',
+                    fg=self.red,
+                )
+            elif self.game.active_player == oni.Player.BLUE:
+                self.status_label.config(
+                    text='Blue to move',
+                    fg=self.blue,
+                )
+        else:
+            winner = 'Red' if self.game.check_victory() == oni.Player.RED else 'Blue'
+            color = self.red if winner == 'Red' else self.blue
+            self.status_label.config(
+                text='{} wins'.format(winner),
+                fg=color
+            )
 
     def draw_board(self):
         def red_home(row, col):
@@ -227,6 +272,7 @@ class GUI():
                 if len(card_choices) == 2:
                     # Player needs to choose a card
                     self.highlight_square(coordinate, 'red')
+                    self.status_label.config(text='Choose a card')
                 else:
                     self.select_card(card_choices[0].name())
             elif coordinate == self.selected:
@@ -251,10 +297,14 @@ class GUI():
             )
             try:
                 self.game.do_move(move)
+                self.undo_highlights()
+                # highlight most recent move
+                self.highlight_square(self.selected, self.lightgreen)
+                self.highlight_square(self.target, self.lightgreen)
             except oni.IllegalMoveError:
                 print('Illegal move')
+                self.undo_highlights()
             self.selected, self.target = None, None
-            self.undo_highlights()
             self.update()
 
 def main():
