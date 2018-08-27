@@ -40,23 +40,23 @@ class GUI():
             width=self.card_size*2+3*self.inset,
             height=self.board_size,
         )
-        self.status_frame = Frame(
+        self.top_frame = Frame(
             parent,
         )
         self.status_label = Label(
-            self.status_frame,
+            self.top_frame,
             text="Welcome",
         )
-        self.analysis_frame = Frame(
+        self.bottom_frame = Frame(
             parent,
         )
         self.analysis_label = Label(
-            self.analysis_frame,
+            self.bottom_frame,
             justify='left',
         )
         self.status_label.pack(side=BOTTOM)
-        self.status_frame.pack(side=TOP, fill='x')
-        self.analysis_frame.pack(side=BOTTOM, fill='x')
+        self.top_frame.pack(side=TOP, fill='x')
+        self.bottom_frame.pack(side=BOTTOM, fill='x')
         self.analysis_label.pack(side=LEFT, padx=10, pady=10)
         self.center_frame.pack(side=BOTTOM)
         self.card_canvas.pack(side=LEFT, padx=self.padding, pady=self.padding)
