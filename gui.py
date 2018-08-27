@@ -47,8 +47,17 @@ class GUI():
             self.status_frame,
             text="Welcome",
         )
+        self.analysis_frame = Frame(
+            parent,
+        )
+        self.analysis_label = Label(
+            self.analysis_frame,
+            justify='left',
+        )
         self.status_label.pack(side=BOTTOM)
         self.status_frame.pack(side=TOP, fill='x')
+        self.analysis_frame.pack(side=BOTTOM, fill='x')
+        self.analysis_label.pack(side=LEFT, padx=10, pady=10)
         self.center_frame.pack(side=BOTTOM)
         self.card_canvas.pack(side=LEFT, padx=self.padding, pady=self.padding)
         self.card_canvas.bind('<Button-1>', self.card_click)
@@ -102,6 +111,11 @@ class GUI():
                 text='{} wins'.format(winner),
                 fg=color
             )
+
+    def update_analysis(self, text):
+        self.analysis_label.config(
+            text=text,
+        )
 
     def draw_board(self):
         def red_home(row, col):
@@ -313,6 +327,7 @@ def main():
     gui = GUI(root,flip=False)
     game = oni.Game(oni.ALL_CARDS[0:5])
     gui.set_game(game, oni.Player.RED)
+    gui.update_analysis("Show analysis here\n1 ...\n2 ...\n3 ...")
     root.mainloop()
 
 if __name__ == '__main__':
