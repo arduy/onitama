@@ -1,55 +1,43 @@
 import unittest
 import onitama as oni
-import ai, ai2
+import ai
 
 class TestGame(unittest.TestCase):
     def setUp(self):
         self.game = oni.Game([oni.TIGER, oni.TIGER, oni.TIGER, oni.TIGER, oni.TIGER])
-        self.ai = ai.AI(game=self.game)
+        self.ai = ai.create_ai(version='unmove')
+        self.ai.set_game_as_root(self.game)
+        self.ai2 = ai.create_ai(version='copy')
+        self.ai2.set_game_as_root(self.game)
 
-    def test_node_from_game(self):
-        node = ai.node_from_game(game=self.game)
-        self.assertEqual(node.last_move, None)
-        self.assertEqual(len(node.board), 25)
-        for i, p in enumerate(node.board):
-            mapping = {
-                ai.EMPTY: oni.Piece.EMPTY,
-                ai.REDKING: oni.Piece.R_KING,
-                ai.REDPAWN: oni.Piece.R_PAWN,
-                ai.BLUEKING: oni.Piece.B_KING,
-                ai.BLUEPAWN: oni.Piece.B_PAWN,
-            }
-            self.assertEqual(mapping[p], self.game.board.array[i])
-        self.game.do_move(oni.Move(
-            player=oni.Player.BLUE,
-            start=(0,4),
-            end=(0,2),
-            card=oni.TIGER,
-        ))
-        node = ai.node_from_game(game=self.game)
-        self.assertEqual(node.last_move.start, 20)
-        self.assertEqual(node.last_move.end, 10)
-        self.assertEqual(node.last_move.player, ai.BLUE)
-        self.assertEqual(node.last_move.card.name, 'tiger')
+    def test_set_root(self):
+        for card in oni.ALL_CARDS:
+            game = oni.Game([card]*5)
+            self.ai.set_game_as_root(game)
+            self.ai2.set_game_as_root(game)
+            if game.active_player.color() == 'red':
+                start_player = ai.RED
+            elif game.active_player.color() == 'blue':
+                start_player = ai.BLUE
+            else:
+                raise Exception
+            self.assertEqual(start_player,self.ai.active_player)
+            self.assertEqual(card.name(),self.ai.card_data[0].name)
+            moves = self.ai2.next_moves(self.ai2.root)
+            for move in moves:
+                self.assertEqual(start_player,move.player)
 
     def test_search(self):
-        self.ai.generate_search_space(depth=3)
-        self.assertEqual(len(self.ai.get_nodes(depth=0)), 1)
-        self.assertEqual(len(self.ai.get_nodes(depth=1)), 10)
-        self.assertEqual(len(self.ai.get_nodes(depth=2)), 100)
-        self.assertEqual(len(self.ai.get_nodes(depth=3)), 80*12 + 16*8)
-        self.assertEqual(
-            len(list(filter(lambda x: x.end, self.ai.get_nodes(depth=2)))), 4
-        )
-
-    def test_ai2(self):
-        ai = ai2.AI()
-        ai.set_game_as_root(self.game)
-        ai.evaluate_to_depth(3)
-        self.assertEqual(len(ai.get_nodes(depth=0)), 1)
-        self.assertEqual(len(ai.get_nodes(depth=1)), 10)
-        self.assertEqual(len(ai.get_nodes(depth=2)), 100)
-        self.assertEqual(len(ai.get_nodes(depth=3)), 80*12 + 16*8)
+        self.ai.mock_search(depth=3)
+        self.ai2.mock_search(depth=3)
+        for a in [self.ai, self.ai2]:
+            self.assertEqual(len(a.get_nodes(depth=0)), 1)
+            self.assertEqual(len(a.get_nodes(depth=1)), 10)
+            self.assertEqual(len(a.get_nodes(depth=2)), 100)
+            self.assertEqual(len(a.get_nodes(depth=3)), 80*12 + 16*8)
+            self.assertEqual(
+                len(list(filter(lambda x: x.end, a.get_nodes(depth=2)))), 4
+            )
 
 if __name__ == '__main__':
     unittest.main()
