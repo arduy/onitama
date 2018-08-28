@@ -40,6 +40,25 @@ class TestGame(unittest.TestCase):
                 len(list(filter(lambda x: x.end, a.get_nodes(depth=2)))), 4
             )
 
+    def test_piece_set(self):
+        def all_pieces():
+            return self.ai.pieces[REDPAWN]|self.ai.pieces[BLUEPAWN]|self.ai.pieces[REDKING]|self.ai.pieces[BLUEKING]
+        for move in self.ai.next_moves():
+            self.ai.do_move(move, self.ai.root)
+            # check pieces
+            for i, piece in enumerate(self.ai.board):
+                if piece != EMPTY:
+                    self.assertTrue(i in self.ai.pieces[piece])
+                else:
+                    i not in all_pieces()
+            self.ai.undo_move(move)
+            for i, piece in enumerate(self.ai.board):
+                if piece != EMPTY:
+                    self.assertTrue(i in self.ai.pieces[piece])
+                else:
+                    i not in all_pieces()
+
+
     def test_material_eval(self):
         board = [ai.EMPTY]*25
         board[0] = REDKING

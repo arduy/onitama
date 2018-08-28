@@ -34,6 +34,19 @@ def create_ai(version='unmove', game=None):
     elif version == 'copy':
         return CopyMoveAI(game)
 
+'''
+For now, two versions of the AI
+CopyMoveAI holds a copy of the board at each Node is explores
+MoveUnmoveAI maintains a single instance of the board, and undoes the moves
+when climbing the search tree
+
+Performance favors the MoveUnmove version when doing an exhaustive search to
+a depth of 5, but for shallow test searches the CopyMove version is faster,
+though I suspect in practice (alpha beta pruning) the MoveUnmove version will perform the best
+
+I'll keep them both for testing, but eventually the worse one will just be removed
+'''
+
 class CopyMoveAI:
     class Node:
         __slots__ = ['board', 'prev_move', 'cards', 'children', 'parent', 'end', 'eval']
@@ -157,6 +170,7 @@ class CopyMoveAI:
             frontier = [child for node in frontier for child in node.children]
         return frontier
 
+
 class MoveUnmoveAI:
     class Node:
         __slots__ = ['prev_move', 'children', 'parent', 'end', 'eval']
@@ -199,6 +213,17 @@ class MoveUnmoveAI:
             end=True if game.check_victory() is not None else False,
             eval=0,
         )
+        # Map each piece to a set containing the
+        # squares that are occupied by the pieces of that type
+        self.pieces = {
+            REDPAWN: set(),
+            BLUEPAWN: set(),
+            REDKING: set(),
+            BLUEKING: set(),
+        }
+        for i, piece in enumerate(self.board):
+            if piece != EMPTY:
+                self.pieces[piece].add(i)
 
     def next_moves(self):
         pieces = [REDPAWN, REDKING] if self.active_player == RED else [BLUEPAWN, BLUEKING]
@@ -232,6 +257,10 @@ class MoveUnmoveAI:
         self.cards[self.cards.index(move.card)] = self.cards[4]
         self.cards[4] = move.card
         self.active_player = (self.active_player+1)%2
+        self.pieces[source].remove(move.start)
+        self.pieces[source].add(move.end)
+        if move.target != EMPTY:
+            self.pieces[move.target].remove(move.end)
         return self.Node(
             prev_move = move,
             children=[],
@@ -241,7 +270,12 @@ class MoveUnmoveAI:
         )
 
     def undo_move(self, move):
-        self.board[move.start] = self.board[move.end]
+        source = self.board[move.end]
+        self.pieces[source].remove(move.end)
+        self.pieces[source].add(move.start)
+        if move.target != EMPTY:
+            self.pieces[move.target].add(move.end)
+        self.board[move.start] = source
         self.board[move.end] = move.target
         self.cards[self.cards.index(move.neutral_card)] = move.card
         self.cards[4] = move.neutral_card
