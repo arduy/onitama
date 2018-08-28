@@ -104,7 +104,7 @@ class CopyMoveAI:
             end=gameover,
         )
 
-    def mock_search(self, depth, mode):
+    def mock_search(self, depth, mode='d'):
         if mode == 'b':
             self._breadth_first(depth)
         elif mode == 'd':
@@ -191,7 +191,7 @@ class MoveUnmoveAI:
             game.start_cards.index(card)
             for card in game.cards[oni.Player.RED]+game.cards[oni.Player.BLUE]+[game.neutral_card]
         ]
-        self.active_player = RED if game.active_player == RED else BLUE
+        self.active_player = RED if game.active_player.color() == 'red' else BLUE
         self.root = self.Node(
             prev_move=None,
             children=[],
@@ -214,6 +214,7 @@ class MoveUnmoveAI:
 
     def evaluate_current(self):
         # stub method
+
         return 0
 
     def do_move(self, move, node):
@@ -284,7 +285,7 @@ def create_card(card_name):
     )
     return Card(
         moves=(red_moves, blue_moves),
-        start_player=RED if card.start_player == oni.Player.RED else BLUE,
+        start_player=RED if card.start_player.color() == 'red' else BLUE,
         name=card_name,
     )
 
