@@ -36,5 +36,40 @@ def material(board, player):
             result = counts[REDPAWN] - counts[BLUEPAWN]
     return result if player == RED else -result
 
+'''
+An evaluator that makes use of piece location sets to improve performance
+The AI must be maintaining location sets to use this evaluator
+A location set is a set of piece locations (indices into board) for a given type of piece
+'''
+class Evaluator:
+    def __init__(self, board, pieces, cards, card_data, weights):
+        self.board = board
+        self.pieces = pieces
+        self.cards = cards
+        self.card_data = card_data
+        self.weights = weights
+
+    # Evaluate in subroutines always from RED's perspective
+    # Negate the final result if BLUE's evaluation was needed
+    def _pawns(self):
+        return len(self.pieces[REDPAWN]) - len(self.pieces[BLUEPAWN])
+
+    def _victory(self):
+        if len(self.pieces[BLUEKING]) == 0 or REDGOAL in self.pieces[REDKING]:
+            return float('inf')
+        elif len(self.pieces[REDKING]) == 0 or BLUEGOAL in self.pieces[BLUEKING]:
+            return -float('inf')
+        else:
+            return 0
+
+    def evaluate(self, player):
+        if player != RED and player != BLUE:
+            raise EvaluatorError('player must be RED or BLUE')
+        if self._victory() != 0:
+            return self._victory() if player == RED else -self._victory()
+        result = self._pawns()
+        return result if player == RED else -result
+
+
 class EvaluatorError(Exception):
     pass
