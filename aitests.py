@@ -1,6 +1,7 @@
 import unittest
 import onitama as oni
 import ai
+from evaluators import *
 
 class TestGame(unittest.TestCase):
     def setUp(self):
@@ -38,6 +39,20 @@ class TestGame(unittest.TestCase):
             self.assertEqual(
                 len(list(filter(lambda x: x.end, a.get_nodes(depth=2)))), 4
             )
+
+    def test_material_eval(self):
+        board = [ai.EMPTY]*25
+        board[0] = REDKING
+        self.assertEqual(neg_inf, material(board,BLUE))
+        self.assertEqual(pos_inf, material(board,RED))
+        board[1] = BLUEKING
+        board[2], board[3], board[4] = REDPAWN, REDPAWN, BLUEPAWN
+        self.assertEqual(1, material(board,RED))
+        self.assertEqual(-1, material(board,BLUE))
+        board[0] = EMPTY
+        board[22] = REDKING
+        self.assertEqual(neg_inf, material(board,BLUE))
+        self.assertEqual(pos_inf, material(board,RED))
 
 if __name__ == '__main__':
     unittest.main()
