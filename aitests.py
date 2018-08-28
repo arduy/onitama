@@ -73,5 +73,22 @@ class TestGame(unittest.TestCase):
         self.assertEqual(neg_inf, material(board,BLUE))
         self.assertEqual(pos_inf, material(board,RED))
 
+    def test_mobility_eval(self):
+        game = oni.Game([oni.TIGER, oni.MONKEY, oni.CRAB, oni.BOAR, oni.MANTIS])
+        self.ai.set_game_as_root(game)
+        eval = get_evaluator(self.ai)
+        eval.card_factor = 0.5
+        # 5 moves for TIGER
+        # 8 moves for MONKEY
+        # 5 moves for CRAB
+        # 5 moves for BOAR
+        # 8 moves for MANTIS
+        # RED: 13 + 0.5*(5+5+8) = 22
+        # BLUE: 10 + 0.5*(5+8+8) = 20.5
+        self.assertEqual(eval.mobility(), 22.0 - 20.5)
+        eval.weights = [1, 1]
+        self.assertEqual(eval.evaluate(RED), 1.5)
+        self.assertEqual(eval.evaluate(BLUE), -1.5)
+
 if __name__ == '__main__':
     unittest.main()
