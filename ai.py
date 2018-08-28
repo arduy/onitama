@@ -307,18 +307,34 @@ class Card:
         self.start_player = start_player
         self.name = name
 
+# In onitama.py, (x,y) coordinates are used to identify squares on the board
+# The AI uses integers with the conversion x + 5*y
+# This function translates the card data into that format
 def create_card(card_name):
     card = oni.NAME_TO_CARD[card_name]
-    red_disps = [c[0]+c[1]*5 for c in card.moves[oni.Player.RED]]
-    blue_disps = [c[0]+c[1]*5 for c in card.moves[oni.Player.BLUE]]
-    red_moves = tuple(
-        tuple(i+d for d in red_disps if i+d in range(25)) for i in range(25)
-    )
-    blue_moves = tuple(
-        tuple(i+d for d in blue_disps if i+d in range(25)) for i in range(25)
-    )
+    # Start with a per-square representation of the card data using 2-tuple coordinates
+    red_moves, blue_moves = dict(), dict()
+    for x in range(5):
+        for y in range(5):
+            red_moves[(x,y)] = [
+                (x+u, y+v)
+                for u,v in card.moves[oni.Player.RED]
+                if x+u in range(5) and y+v in range(5)
+            ]
+            blue_moves[(x,y)] = [
+                (x+u, y+v)
+                for u,v in card.moves[oni.Player.BLUE]
+                if x+u in range(5) and y+v in range(5)
+            ]
+    # Convert to 1-d (integer) coordinates
+    # (x, y) -> x + 5*y
+    red_converted, blue_converted = [None]*25, [None]*25
+    for y in range(5):
+        for x in range(5):
+            red_converted[x + y*5] = [u + 5*v for u,v in red_moves[(x,y)]]
+            blue_converted[x + y*5] = [u + 5*v for u,v in blue_moves[(x,y)]]
     return Card(
-        moves=(red_moves, blue_moves),
+        moves=(red_converted, blue_converted),
         start_player=RED if card.start_player.color() == 'red' else BLUE,
         name=card_name,
     )
