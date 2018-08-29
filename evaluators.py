@@ -7,8 +7,7 @@ Also some weights for the features (function dependent)
 Functions should all be antisymmetric with respect to player
 That is, eval(RED) == -eval(BLUE)
 '''
-
-from ai import RED, BLUE, EMPTY, REDPAWN, BLUEPAWN, REDKING, BLUEKING, REDGOAL, BLUEGOAL
+from constants import *
 from collections import defaultdict
 
 # 'infinite' scores indicate a loss of game
