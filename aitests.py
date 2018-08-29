@@ -59,37 +59,22 @@ class TestGame(unittest.TestCase):
                 else:
                     i not in all_pieces()
 
-
-    def test_material_eval(self):
-        board = [ai.EMPTY]*25
-        board[0] = REDKING
-        self.assertEqual(-float('inf'), material(board,BLUE))
-        self.assertEqual(float('inf'), material(board,RED))
-        board[1] = BLUEKING
-        board[2], board[3], board[4] = REDPAWN, REDPAWN, BLUEPAWN
-        self.assertEqual(1, material(board,RED))
-        self.assertEqual(-1, material(board,BLUE))
-        board[0] = EMPTY
-        board[22] = REDKING
-        self.assertEqual(-float('inf'), material(board,BLUE))
-        self.assertEqual(float('inf'), material(board,RED))
-
     def test_mobility_eval(self):
         game = oni.Game([oni.TIGER, oni.MONKEY, oni.CRAB, oni.BOAR, oni.MANTIS])
         self.ai.set_game_as_root(game)
         eval = get_evaluator(self.ai)
-        eval.card_factor = 0.5
+        eval.true_mobility_factor = 2.0
         # 5 moves for TIGER
         # 8 moves for MONKEY
         # 5 moves for CRAB
         # 5 moves for BOAR
         # 8 moves for MANTIS
-        # RED: 13 + 0.5*(5+5+8) = 22
-        # BLUE: 10 + 0.5*(5+8+8) = 20.5
-        self.assertEqual(eval.mobility(), 22.0 - 20.5)
-        eval.weights = [1, 1]
-        self.assertEqual(eval.evaluate(RED), 1.5)
-        self.assertEqual(eval.evaluate(BLUE), -1.5)
+        # RED: 2*13 + 5+5+8 = 44
+        # BLUE: 2*10 + 5+8+8 = 41
+        self.assertEqual(eval.mobility(), 3.0)
+        eval.pawn_weight, eval.mobility_weight = 1,1
+        self.assertEqual(eval.evaluate(RED), 3.0)
+        self.assertEqual(eval.evaluate(BLUE), -3.0)
 
     def test_negamax(self):
         game = oni.Game([oni.TIGER, oni.MONKEY, oni.CRAB, oni.BOAR, oni.MANTIS])
@@ -102,6 +87,6 @@ class TestGame(unittest.TestCase):
             curr = max(curr.children, key=lambda x: -x.eval)
             sign = -1 if i % 2 == 0 else 1
             self.assertEqual(score, sign*curr.eval)
-        print(score)
+
 if __name__ == '__main__':
     unittest.main()

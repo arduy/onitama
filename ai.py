@@ -3,7 +3,6 @@ from collections import namedtuple
 from evaluators import Evaluator
 from constants import *
 
-
 '''
 A board is a length 25 array of ints, each index i representing
 the coordinate (x, y) = (i % 5, i // 5)
@@ -20,8 +19,7 @@ squares for a move starting on square i
 
 def create_ai(version='unmove', game=None):
     if version == 'unmove':
-        ai = MoveUnmoveAI(game=game)
-        return ai
+        return MoveUnmoveAI(game)
     elif version == 'copy':
         return CopyMoveAI(game)
 
@@ -221,7 +219,6 @@ class MoveUnmoveAI:
             cards=self.cards,
             card_data=self.card_data,
         )
-
 
     def next_moves(self):
         pieces = [REDPAWN, REDKING] if self.active_player == RED else [BLUEPAWN, BLUEKING]
