@@ -1,12 +1,13 @@
 import unittest
 import onitama as oni
 import ai
+from constants import *
 from evaluators import *
 
 class TestGame(unittest.TestCase):
     def setUp(self):
         self.game = oni.Game([oni.TIGER, oni.TIGER, oni.TIGER, oni.TIGER, oni.TIGER])
-        self.ai = ai.create_ai(version='unmove')
+        self.ai = ai.create_ai(version='unmove', game=self.game)
         self.ai.set_game_as_root(self.game)
         self.ai2 = ai.create_ai(version='copy')
         self.ai2.set_game_as_root(self.game)
@@ -62,16 +63,16 @@ class TestGame(unittest.TestCase):
     def test_material_eval(self):
         board = [ai.EMPTY]*25
         board[0] = REDKING
-        self.assertEqual(neg_inf, material(board,BLUE))
-        self.assertEqual(pos_inf, material(board,RED))
+        self.assertEqual(-float('inf'), material(board,BLUE))
+        self.assertEqual(float('inf'), material(board,RED))
         board[1] = BLUEKING
         board[2], board[3], board[4] = REDPAWN, REDPAWN, BLUEPAWN
         self.assertEqual(1, material(board,RED))
         self.assertEqual(-1, material(board,BLUE))
         board[0] = EMPTY
         board[22] = REDKING
-        self.assertEqual(neg_inf, material(board,BLUE))
-        self.assertEqual(pos_inf, material(board,RED))
+        self.assertEqual(-float('inf'), material(board,BLUE))
+        self.assertEqual(float('inf'), material(board,RED))
 
     def test_mobility_eval(self):
         game = oni.Game([oni.TIGER, oni.MONKEY, oni.CRAB, oni.BOAR, oni.MANTIS])
@@ -90,5 +91,17 @@ class TestGame(unittest.TestCase):
         self.assertEqual(eval.evaluate(RED), 1.5)
         self.assertEqual(eval.evaluate(BLUE), -1.5)
 
+    def test_negamax(self):
+        game = oni.Game([oni.TIGER, oni.MONKEY, oni.CRAB, oni.BOAR, oni.MANTIS])
+        self.ai.set_game_as_root(game)
+        score = self.ai.negamax(node=self.ai.root, depth=5)
+        curr = self.ai.root
+        # Climb down our generated search tree to verify
+        # the correctness of negamax
+        for i in range(5):
+            curr = max(curr.children, key=lambda x: -x.eval)
+            sign = -1 if i % 2 == 0 else 1
+            self.assertEqual(score, sign*curr.eval)
+        print(score)
 if __name__ == '__main__':
     unittest.main()

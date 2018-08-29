@@ -1,5 +1,6 @@
 import onitama as oni
 from collections import namedtuple
+from evaluators import Evaluator
 from constants import *
 
 
@@ -19,7 +20,8 @@ squares for a move starting on square i
 
 def create_ai(version='unmove', game=None):
     if version == 'unmove':
-        return MoveUnmoveAI(game)
+        ai = MoveUnmoveAI(game=game)
+        return ai
     elif version == 'copy':
         return CopyMoveAI(game)
 
@@ -213,6 +215,13 @@ class MoveUnmoveAI:
         for i, piece in enumerate(self.board):
             if piece != EMPTY:
                 self.pieces[piece].add(i)
+        self.evaluator = Evaluator(
+            board=self.board,
+            pieces=self.pieces,
+            cards=self.cards,
+            card_data=self.card_data,
+        )
+
 
     def next_moves(self):
         pieces = [REDPAWN, REDKING] if self.active_player == RED else [BLUEPAWN, BLUEKING]
@@ -227,9 +236,7 @@ class MoveUnmoveAI:
         ]
 
     def evaluate_current(self):
-        # stub method
-
-        return 0
+        return self.evaluator.evaluate(self.active_player)
 
     def do_move(self, move, node):
         source = self.board[move.start]
@@ -255,7 +262,7 @@ class MoveUnmoveAI:
             children=[],
             parent=node,
             end=gameover,
-            eval=0,
+            eval=None,
         )
 
     def undo_move(self, move):
@@ -287,6 +294,24 @@ class MoveUnmoveAI:
         for _ in range(depth):
             nodes = [child for node in nodes for child in node.children]
         return nodes
+
+    # Bad search strategy!
+    # Just for testing
+    def negamax(self, node, depth):
+        if depth == 0 or node.end:
+            node.eval = self.evaluate_current()
+            return node.eval
+        max = -float('inf')
+        moves = self.next_moves()
+        node.children = [None for _ in range(len(moves))]
+        for i, move in enumerate(moves):
+            node.children[i] = self.do_move(move, node)
+            eval = -self.negamax(node.children[i], depth-1)
+            if eval > max:
+                max = eval
+            self.undo_move(move)
+        node.eval = max
+        return max
 
 class Card:
     __slots__ = ['moves', 'start_player', 'name']

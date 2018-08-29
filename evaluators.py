@@ -12,8 +12,8 @@ from collections import defaultdict
 
 # 'infinite' scores indicate a loss of game
 # Choose a big enough number, or we could use float('inf')
-neg_inf = -1000
-pos_inf = 1000
+neg_inf = -float('inf')
+pos_inf = float('inf')
 
 def material(board, player):
     if player != RED and player != BLUE:
@@ -55,6 +55,7 @@ class Evaluator:
         self.cards = cards
         self.card_data = card_data
         self.weights = weights
+        self.card_factor = card_factor
 
     # Evaluate in subroutines always from RED's perspective
     # Negate the final result if BLUE's evaluation was needed
