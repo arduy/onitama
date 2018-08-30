@@ -172,11 +172,12 @@ class MoveUnmoveAI:
             self.eval = eval
 
     class Move:
-        __slots__ = ['start', 'end', 'target', 'player', 'card', 'neutral_card']
+        __slots__ = ['start', 'end', 'source', 'target', 'player', 'card', 'neutral_card']
 
-        def __init__(self, start, end, target, player, card, neutral_card):
+        def __init__(self, start, source, end, target, player, card, neutral_card):
             self.start = start
             self.end = end
+            self.source = source
             self.target = target
             self.player = player
             self.card = card
@@ -224,13 +225,38 @@ class MoveUnmoveAI:
         pieces = [REDPAWN, REDKING] if self.active_player == RED else [BLUEPAWN, BLUEKING]
         start_squares = [i for i in range(25) if self.board[i] in pieces]
         player_cards = self.cards[self.active_player*2:self.active_player*2+2]
-        return [
-            self.Move(start=start, end=end, target=self.board[end], player=self.active_player, card=card, neutral_card=self.cards[4])
+        return set(
+            self.Move(start=start, end=end, source=self.board[start], target=self.board[end], player=self.active_player, card=card, neutral_card=self.cards[4])
             for start in start_squares
             for card in player_cards
             for end in self.card_data[card].moves[self.active_player][start]
             if end not in start_squares
-        ]
+        )
+
+    # For best alpha-beta pruning performance need to select moves
+    # in a good order, where potentially best moves are checked first
+    # Return all captures (and immediate wins) on the first iteration
+    def move_selector(self, move_set, player):
+        if player == RED:
+            targets = [BLUEPAWN, BLUEKING]
+            king = REDKING
+            goal = REDGOAL
+        else:
+            targets = [REDPAWN, REDKING]
+            king = BLUEKING
+            goal = BLUEGOAL
+        def winner(move):
+            return move.source == king and move.end == goal
+        def capture(move):
+            return move.target in targets
+        selected = set()
+        for move in move_set:
+            if capture(move) or winner(move):
+                yield move
+                selected.add(move)
+        for move in move_set:
+            if move not in selected:
+                yield move
 
     def evaluate_current(self):
         return self.evaluator.evaluate(self.active_player)
@@ -301,7 +327,8 @@ class MoveUnmoveAI:
         max = -float('inf')
         moves = self.next_moves()
         node.children = [None for _ in range(len(moves))]
-        for i, move in enumerate(moves):
+        move_gen = self.move_selector(moves, self.active_player)
+        for i, move in enumerate(move_gen):
             node.children[i] = self.do_move(move, node)
             eval = -self.negamax(node.children[i], depth-1)
             if eval > max:
