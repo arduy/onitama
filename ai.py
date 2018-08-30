@@ -375,6 +375,14 @@ class MoveUnmoveAI:
         node.eval = max
         return max
 
+    def create_game_move(self, move):
+        player = oni.Player.RED if move.player == RED else oni.Player.BLUE
+        start = (move.start % 5, move.start // 5)
+        end = (move.end % 5, move.end // 5)
+        card_name = self.card_data[move.card].name
+        card = oni.NAME_TO_CARD[card_name]
+        return oni.Move(player, start, end, card)
+
 class Card:
     __slots__ = ['moves', 'start_player', 'name']
 

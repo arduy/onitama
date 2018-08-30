@@ -2,6 +2,7 @@ from tkinter import *
 from PIL import ImageTk, Image
 from math import floor
 import onitama as oni
+from ai import create_ai
 
 class GUI():
     rows = 5
@@ -74,13 +75,14 @@ class GUI():
         }
         self.selected = None
         self.target = None
-
+        self.ai = create_ai()
 
 
     def set_game(self, game, user):
         self.game = game
         self.user = user
         self.card_names = [card.name() for card in game.start_cards]
+        self.ai.set_game_as_root(game)
         self.update()
 
     def update(self):
@@ -325,12 +327,23 @@ class GUI():
                 self.undo_highlights()
             self.selected, self.target = None, None
             self.update()
+            self.do_ai_move(4)
+
+    def do_ai_move(self, depth):
+        self.ai.set_game_as_root(self.game)
+        move = self.ai.find_move(depth)
+        onimove = self.ai.create_game_move(move)
+        try:
+            self.game.do_move(onimove)
+        except Exception:
+            print('Illegal move')
+        self.update()
 
 def main():
     root = Tk()
     root.title('Board')
-    gui = GUI(root,flip=False)
-    game = oni.Game(oni.ALL_CARDS[0:5])
+    gui = GUI(root)
+    game = oni.Game(oni.ALL_CARDS[1:6])
     gui.set_game(game, oni.Player.RED)
     gui.update_analysis("Show analysis here\n1 ...\n2 ...\n3 ...")
     root.mainloop()
