@@ -58,6 +58,7 @@ class GUI:
         )
         self.menubar = Menu(parent)
         self.menubar.add_command(label="New Game", command=self.new_game)
+        self.menubar.add_command(label="Flip Board", command=self.flip_board)
         self.parent.config(menu=self.menubar)
         self.status_label.pack(side=BOTTOM)
         self.top_frame.pack(side=TOP, fill='x')
@@ -97,6 +98,12 @@ class GUI:
         self.update()
         if not self.game.active_player is self.user:
             self.parent.after(self.ai_wait, self.do_ai_move)
+
+    def flip_board(self):
+        self.flip = not self.flip
+        self.draw_board()
+        self.undo_highlights()
+        self.update()
 
     def update(self):
         self.draw_pieces(self.game.board.array)
@@ -144,6 +151,7 @@ class GUI:
             else:
                 return row == 0 and col == 2
         colors = [self.dark, self.light]
+        self.board_canvas.delete('square')
         for col in range(self.columns):
             for row in range(self.rows):
                 if blue_home(row, col):
@@ -152,7 +160,10 @@ class GUI:
                     color = '#ffcccc'
                 else:
                     color = colors[(col+row)%2]
-                coord_tag = '{},{}'.format(str(col),str(4-row))
+                if self.flip:
+                    coord_tag = '{},{}'.format(str(4-col),str(row))
+                else:
+                    coord_tag = '{},{}'.format(str(col),str(4-row))
                 self.board_canvas.create_rectangle(
                     col*self.square_size+self.inset,
                     row*self.square_size+self.inset,
@@ -160,13 +171,13 @@ class GUI:
                     (row+1)*self.square_size+self.inset,
                     width=2,
                     fill=color,
-                    tags=(coord_tag,color)
+                    tags=(coord_tag,color,'square')
                 )
 
     def draw_pieces(self, pieces):
         def coordinate(i):
             if self.flip:
-                col = i % 5
+                col = 4 - (i % 5)
                 row = i // 5
                 return (col*self.square_size+self.inset, row*self.square_size+self.inset)
             else:
@@ -249,7 +260,15 @@ class GUI:
             canvas = event.widget
             x = canvas.canvasx(event.x)
             y = canvas.canvasy(event.y)
-            coord = (floor(x/self.square_size), 4 - floor(y/self.square_size))
+            items = canvas.find_overlapping(x,y,x+1,y+1)
+            coord = None
+            for item in items:
+                tags = canvas.gettags(item)
+                if 'square' in tags:
+                    coord = tags[0]
+                    break
+            if coord is not None:
+                coord = parse_str_coord(coord)
             self.select_square(coord)
 
     def card_click(self, event):
@@ -270,8 +289,12 @@ class GUI:
     def highlight_square(self, coordinate, color):
         coord_tag = '{},{}'.format(str(coordinate[0]), str(coordinate[1]))
         item = self.board_canvas.find_withtag(coord_tag)
-        tags = self.board_canvas.gettags(item)[0:2]
-        self.board_canvas.itemconfig(item, fill=color, tags=tags+('highlight',))
+        tags = self.board_canvas.gettags(item)
+        try:
+            self.board_canvas.itemconfig(item, fill=color, tags=tags+('highlight',))
+        except Exception:
+            print('Failed to highlight square {}'.format(coord_tag))
+            print(item)
 
     def highlight_targets(self):
         if self.selected is not None:
@@ -285,8 +308,9 @@ class GUI:
 
     def undo_highlights(self):
         highlighted = self.board_canvas.find_withtag('highlight')
+        self.board_canvas.dtag(highlighted,'highlight')
         for item in highlighted:
-            tags = self.board_canvas.gettags(item)[0:2]
+            tags = self.board_canvas.gettags(item)
             old_color = tags[1]
             self.board_canvas.itemconfig(item, fill=old_color)
 
@@ -352,6 +376,15 @@ class GUI:
         start = move.start % 5, move.start // 5
         end = move.end % 5, move.end // 5
         self.do_game_move(start, end, card)
+
+def parse_str_coord(coord):
+    # String format: 'x,y'
+    try:
+        x = int(coord[0])
+        y = int(coord[2])
+        return (x,y)
+    except:
+        return None
 
 def main():
     root = Tk()
