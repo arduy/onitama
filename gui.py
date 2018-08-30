@@ -3,6 +3,7 @@ from PIL import ImageTk, Image
 from math import floor
 import onitama as oni
 from ai import create_ai
+import random
 
 class GUI():
     rows = 5
@@ -55,6 +56,9 @@ class GUI():
             self.bottom_frame,
             justify='left',
         )
+        self.menubar = Menu(parent)
+        self.menubar.add_command(label="New Game", command=self.new_game)
+        self.parent.config(menu=self.menubar)
         self.status_label.pack(side=BOTTOM)
         self.top_frame.pack(side=TOP, fill='x')
         self.bottom_frame.pack(side=BOTTOM, fill='x')
@@ -76,14 +80,22 @@ class GUI():
         self.selected = None
         self.target = None
         self.ai = create_ai()
+        self.ai_depth = 4
+        self.new_game()
 
+    def new_game(self):
+        cards = random.sample(oni.ALL_CARDS, 5)
+        game = oni.Game(cards)
+        self.set_game(game=game, user=oni.Player.RED)
 
     def set_game(self, game, user):
         self.game = game
         self.user = user
         self.card_names = [card.name() for card in game.start_cards]
-        self.ai.set_game_as_root(game)
+        self.undo_highlights()
         self.update()
+        if not self.game.active_player is self.user:
+            self.do_ai_move()
 
     def update(self):
         self.draw_pieces(self.game.board.array)
@@ -232,25 +244,27 @@ class GUI():
                 )
 
     def board_click(self, event):
-        canvas = event.widget
-        x = canvas.canvasx(event.x)
-        y = canvas.canvasy(event.y)
-        coord = (floor(x/self.square_size), 4 - floor(y/self.square_size))
-        self.select_square(coord)
+        if self.game.active_player is self.user:
+            canvas = event.widget
+            x = canvas.canvasx(event.x)
+            y = canvas.canvasy(event.y)
+            coord = (floor(x/self.square_size), 4 - floor(y/self.square_size))
+            self.select_square(coord)
 
     def card_click(self, event):
-        canvas = event.widget
-        x = canvas.canvasx(event.x)
-        y = canvas.canvasy(event.y)
-        try:
-            item = canvas.find_overlapping(x+0,y+0,x+1,y+1)[0]
-        except IndexError:
-            return
-        tags = canvas.gettags(item)
-        for tag in tags:
-            if tag in self.card_names:
-                self.select_card(tag)
-                break
+        if self.game.active_player is self.user:
+            canvas = event.widget
+            x = canvas.canvasx(event.x)
+            y = canvas.canvasy(event.y)
+            try:
+                item = canvas.find_overlapping(x+0,y+0,x+1,y+1)[0]
+            except IndexError:
+                return
+            tags = canvas.gettags(item)
+            for tag in tags:
+                if tag in self.card_names:
+                    self.select_card(tag)
+                    break
 
     def highlight_square(self, coordinate, color):
         coord_tag = '{},{}'.format(str(coordinate[0]), str(coordinate[1]))
@@ -307,45 +321,41 @@ class GUI():
         if self.selected is not None and self.target is not None:
             card = oni.NAME_TO_CARD[card_name]
             if card in self.game.cards[self.game.active_player]:
-                move = oni.Move(
-                    player=self.game.active_player,
-                    start=self.selected,
-                    end=self.target,
-                    card=oni.NAME_TO_CARD[card_name],
-                )
-            else:
-                # Bad card selection
-                return
-            try:
-                self.game.do_move(move)
-                self.undo_highlights()
-                # highlight most recent move
-                self.highlight_square(self.selected, self.lightgreen)
-                self.highlight_square(self.target, self.lightgreen)
-            except oni.IllegalMoveError:
-                print('Illegal move')
-                self.undo_highlights()
-            self.selected, self.target = None, None
-            self.update()
-            self.do_ai_move(4)
+                self.do_game_move(self.selected, self.target, card)
+                self.selected, self.target = None, None
 
-    def do_ai_move(self, depth):
-        self.ai.set_game_as_root(self.game)
-        move = self.ai.find_move(depth)
-        onimove = self.ai.create_game_move(move)
+    def do_game_move(self, source, target, card):
         try:
-            self.game.do_move(onimove)
-        except Exception:
+            move = oni.Move(
+                player=self.game.active_player,
+                start=source,
+                end=target,
+                card=card,
+            )
+            self.game.do_move(move)
+            self.undo_highlights()
+            self.highlight_square(source, self.lightgreen)
+            self.highlight_square(target, self.lightgreen)
+            self.update()
+            if not self.game.active_player is self.user:
+                self.do_ai_move()
+        except oni.IllegalMoveError:
             print('Illegal move')
-        self.update()
+            self.undo_highlights()
+
+    def do_ai_move(self):
+        self.ai.set_game_as_root(self.game)
+        move = self.ai.find_move(self.ai_depth)
+        card_name = self.ai.card_data[move.card].name
+        card = oni.NAME_TO_CARD[card_name]
+        start = move.start % 5, move.start // 5
+        end = move.end % 5, move.end // 5
+        self.do_game_move(start, end, card)
 
 def main():
     root = Tk()
-    root.title('Board')
+    root.title('Onitama')
     gui = GUI(root)
-    game = oni.Game(oni.ALL_CARDS[1:6])
-    gui.set_game(game, oni.Player.RED)
-    gui.update_analysis("Show analysis here\n1 ...\n2 ...\n3 ...")
     root.mainloop()
 
 if __name__ == '__main__':
