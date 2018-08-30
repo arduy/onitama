@@ -318,6 +318,45 @@ class MoveUnmoveAI:
             nodes = [child for node in nodes for child in node.children]
         return nodes
 
+    # Standard implementation of alpha-beta pruning (using the negamax perspective)
+    # Missing the VERY import queiscence search once depth is reached!
+    def alphabeta(self, alpha, beta, node, depth):
+        if depth == 0 or node.end:
+            node.eval = self.evaluate_current()
+            return node.eval
+        moves = self.next_moves()
+        node.children = [None for _ in range(len(moves))]
+        move_gen = self.move_selector(moves, self.active_player)
+        for i, move in enumerate(move_gen):
+            node.children[i] = self.do_move(move, node)
+            score = -self.alphabeta(-beta, -alpha, node.children[i], depth-1)
+            if score >= beta:
+                self.undo_move(move)
+                return beta
+            if score > alpha:
+                alpha = score
+            self.undo_move(move)
+        node.eval = alpha
+        return alpha
+
+    def find_move(self, depth):
+        score = self.alphabeta(
+            alpha=-float('inf'),
+            beta=float('inf'),
+            depth=depth,
+            node=self.root,
+        )
+        # path = [self.root]
+        # curr = self.root
+        # for _ in range(depth):
+        #     children = [node for node in curr.children if node.eval != None]
+        #     curr = max(children, key=lambda x: -x.eval)
+        #     path.append(curr)
+        for node in self.root.children:
+            if node.eval == -score:
+                return node.prev_move
+
+
     # Bad search strategy!
     # Just for testing
     def negamax(self, node, depth):
@@ -327,8 +366,7 @@ class MoveUnmoveAI:
         max = -float('inf')
         moves = self.next_moves()
         node.children = [None for _ in range(len(moves))]
-        move_gen = self.move_selector(moves, self.active_player)
-        for i, move in enumerate(move_gen):
+        for i, move in enumerate(moves):
             node.children[i] = self.do_move(move, node)
             eval = -self.negamax(node.children[i], depth-1)
             if eval > max:
