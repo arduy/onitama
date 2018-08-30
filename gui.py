@@ -5,7 +5,7 @@ import onitama as oni
 from ai import create_ai
 import random
 
-class GUI():
+class GUI:
     rows = 5
     columns = 5
     square_size = 100
@@ -81,6 +81,7 @@ class GUI():
         self.target = None
         self.ai = create_ai()
         self.ai_depth = 4
+        self.ai_wait = 20
         self.new_game()
 
     def new_game(self):
@@ -95,7 +96,7 @@ class GUI():
         self.undo_highlights()
         self.update()
         if not self.game.active_player is self.user:
-            self.do_ai_move()
+            self.parent.after(self.ai_wait, self.do_ai_move)
 
     def update(self):
         self.draw_pieces(self.game.board.array)
@@ -338,7 +339,7 @@ class GUI():
             self.highlight_square(target, self.lightgreen)
             self.update()
             if not self.game.active_player is self.user:
-                self.do_ai_move()
+                self.parent.after(self.ai_wait, self.do_ai_move)
         except oni.IllegalMoveError:
             print('Illegal move')
             self.undo_highlights()
