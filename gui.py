@@ -205,7 +205,7 @@ class GUI:
         coords = [
             (self.inset, self.inset),
             (self.inset*2 + self.card_size, self.inset),
-            (self.inset + self.card_size/2, self.board_size/2 - self.card_size/2),
+            (self.card_canvas_width/2 - self.card_size/2, self.board_size/2 - self.card_size/2),
             (self.inset, self.board_size - self.card_size - self.inset),
             (self.inset*2 + self.card_size, self.board_size - self.card_size - self.inset)
         ]
@@ -220,20 +220,26 @@ class GUI:
         for i in range(5):
             c = coords[i]
             self.draw_card(c[0], c[1], cards[i], players[i])
+            if cards[i] != neutral:
+                color = self.red if players[i].color() == 'red' else self.blue
+            else:
+                color = 'black'
             if i >= 2:
                 self.card_canvas.create_text(
                     c[0]+self.card_size/2,
                     c[1],
-                    text=cards[i].name(),
+                    text=cards[i].name().upper(),
                     anchor='s',
+                    fill=color,
                     tags=('card',)
                 )
             else:
                 self.card_canvas.create_text(
                     c[0]+self.card_size/2,
                     c[1]+self.card_size,
-                    text=cards[i].name(),
+                    text=cards[i].name().upper(),
                     anchor='n',
+                    fill=color,
                     tags=('card',)
                 )
 
@@ -241,12 +247,14 @@ class GUI:
         unit = self.card_size/5
         if self.flip:
             squares = [(c[0]+2, c[1]+2) for c in card.moves[player.other()]]
+            bot_right_corner = (0,0) if player.color() == 'red' else (4,4)
         else:
             squares = [(c[0]+2, c[1]+2) for c in card.moves[player]]
+            bot_right_corner = (4,4) if player.color() == 'red' else (0,0)
         for col in range(5):
             for row in range(5):
                 if (col, row) == (2,2):
-                    color = '#80ff80'
+                    color = self.lightgreen
                 elif (col, 4-row) in squares:
                     color = 'yellow'
                 else:
@@ -259,6 +267,15 @@ class GUI:
                     fill=color,
                     tags=('card', card.name())
                 )
+                if (col, row) == bot_right_corner:
+                    gap = unit/3.0
+                    self.card_canvas.create_oval(
+                        x+col*unit+gap,
+                        y+row*unit+gap,
+                        x+(col+1)*unit-gap,
+                        y+(row+1)*unit-gap,
+                        fill='black'
+                    )
 
     def board_click(self, event):
         if self.game.active_player is self.user:
