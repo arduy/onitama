@@ -3,6 +3,7 @@ from PIL import ImageTk, Image
 from math import floor
 import onitama as oni
 from ai import create_ai
+from collections import defaultdict
 import random
 
 class GUI:
@@ -69,6 +70,7 @@ class GUI:
         self.card_canvas.bind('<Button-1>', self.card_click)
         self.board_canvas.pack(side=LEFT, padx=self.padding, pady=self.padding)
         self.board_canvas.bind('<Button-1>', self.board_click)
+        self.highlights = HighlightManager()
         self.draw_board()
         images = {
             name: Image.open('./pieces/{}.png'.format(name)).resize((self.square_size, self.square_size), Image.ANTIALIAS)
@@ -94,18 +96,18 @@ class GUI:
         self.game = game
         self.user = user
         self.card_names = [card.name() for card in game.start_cards]
-        self.undo_highlights()
+        self.undo_highlights('all')
         self.update()
         if not self.game.active_player is self.user:
             self.parent.after(self.ai_wait, self.do_ai_move)
 
     def flip_board(self):
         self.flip = not self.flip
-        self.draw_board()
-        self.undo_highlights()
+
         self.update()
 
     def update(self):
+        self.draw_board()
         self.draw_pieces(self.game.board.array)
         self.draw_cards(
             red=self.game.cards[oni.Player.RED],
@@ -161,10 +163,12 @@ class GUI:
                 else:
                     color = colors[(col+row)%2]
                 if self.flip:
-                    coord_tag = '{},{}'.format(str(4-col),str(row))
+                    coord = 4-col, row
+                    coord_tag = '{},{}'.format(coord[0],coord[1])
                 else:
-                    coord_tag = '{},{}'.format(str(col),str(4-row))
-                self.board_canvas.create_rectangle(
+                    coord = col, 4-row
+                    coord_tag = '{},{}'.format(coord[0],coord[1])
+                rect = self.board_canvas.create_rectangle(
                     col*self.square_size+self.inset,
                     row*self.square_size+self.inset,
                     (col+1)*self.square_size+self.inset,
@@ -173,6 +177,8 @@ class GUI:
                     fill=color,
                     tags=(coord_tag,color,'square')
                 )
+                if self.highlights.get_color(coord) is not None:
+                    self.board_canvas.itemconfig(rect,fill=self.highlights.get_color(coord))
 
     def draw_pieces(self, pieces):
         def coordinate(i):
@@ -231,7 +237,6 @@ class GUI:
                     tags=('card',)
                 )
 
-
     def draw_card(self, x, y, card, player):
         unit = self.card_size/5
         if self.flip:
@@ -286,15 +291,9 @@ class GUI:
                     self.select_card(tag)
                     break
 
-    def highlight_square(self, coordinate, color):
-        coord_tag = '{},{}'.format(str(coordinate[0]), str(coordinate[1]))
-        item = self.board_canvas.find_withtag(coord_tag)
-        tags = self.board_canvas.gettags(item)
-        try:
-            self.board_canvas.itemconfig(item, fill=color, tags=tags+('highlight',))
-        except Exception:
-            print('Failed to highlight square {}'.format(coord_tag))
-            print(item)
+    def highlight_square(self, coordinate, type):
+        self.highlights.set(coordinate, type)
+        self.update()
 
     def highlight_targets(self):
         if self.selected is not None:
@@ -304,21 +303,21 @@ class GUI:
                 for target in moves.get(self.selected)
             ]
             for target in self.game.legal_move_targets(self.selected):
-                self.highlight_square(target, 'yellow')
+                self.highlight_square(target, 'candidate')
 
-    def undo_highlights(self):
-        highlighted = self.board_canvas.find_withtag('highlight')
-        self.board_canvas.dtag(highlighted,'highlight')
-        for item in highlighted:
-            tags = self.board_canvas.gettags(item)
-            old_color = tags[1]
-            self.board_canvas.itemconfig(item, fill=old_color)
+    def undo_highlights(self, *args):
+        for arg in args:
+            if arg == 'all':
+                self.highlights.remove_all_types()
+            else:
+                self.highlights.remove_all(arg)
+        self.update()
 
     def select_square(self, coordinate):
         if self.selected is None:
             if coordinate in self.game.legal_move_starts():
                 self.selected = coordinate
-                self.highlight_square(coordinate, '#80ff80')
+                self.highlight_square(coordinate, 'selected')
                 self.highlight_targets()
         elif self.target is None:
             if coordinate in self.game.legal_move_targets(self.selected):
@@ -326,20 +325,21 @@ class GUI:
                 card_choices = self.game.get_card_choices_for_move(self.selected, self.target)
                 if len(card_choices) == 2:
                     # Player needs to choose a card
-                    self.highlight_square(coordinate, 'red')
+                    self.highlight_square(coordinate, 'target')
                     self.status_label.config(text='Choose a card')
                 else:
+                    self.undo_highlights('selected', 'candidate')
                     self.select_card(card_choices[0].name())
             elif coordinate == self.selected:
-                self.undo_highlights()
+                self.undo_highlights('selected', 'candidate')
                 self.selected = None
             elif coordinate in self.game.legal_move_starts():
-                self.undo_highlights()
+                self.undo_highlights('selected', 'candidate')
                 self.selected = coordinate
-                self.highlight_square(coordinate, '#80ff80')
+                self.highlight_square(coordinate, 'selected')
                 self.highlight_targets()
             else:
-                self.undo_highlights()
+                self.undo_highlights('selected', 'candidate')
                 self.selected = None
 
     def select_card(self, card_name):
@@ -350,23 +350,19 @@ class GUI:
                 self.selected, self.target = None, None
 
     def do_game_move(self, source, target, card):
-        try:
-            move = oni.Move(
-                player=self.game.active_player,
-                start=source,
-                end=target,
-                card=card,
-            )
-            self.game.do_move(move)
-            self.undo_highlights()
-            self.highlight_square(source, self.lightgreen)
-            self.highlight_square(target, self.lightgreen)
-            self.update()
-            if not self.game.active_player is self.user:
-                self.parent.after(self.ai_wait, self.do_ai_move)
-        except oni.IllegalMoveError:
-            print('Illegal move')
-            self.undo_highlights()
+        move = oni.Move(
+            player=self.game.active_player,
+            start=source,
+            end=target,
+            card=card,
+        )
+        self.game.do_move(move)
+        self.undo_highlights('all')
+        self.highlight_square(source, 'previous')
+        self.highlight_square(target, 'previous')
+        self.update()
+        if not self.game.active_player is self.user:
+            self.parent.after(self.ai_wait, self.do_ai_move)
 
     def do_ai_move(self):
         self.ai.set_game_as_root(self.game)
@@ -376,6 +372,56 @@ class GUI:
         start = move.start % 5, move.start // 5
         end = move.end % 5, move.end // 5
         self.do_game_move(start, end, card)
+
+class HighlightManager:
+    types = ['previous', 'selected', 'candidate', 'target']
+    color = {
+        'previous': '#ccffcc',
+        'selected': '#80ff80',
+        'candidate': 'yellow',
+        'target': 'red',
+    }
+    def __init__(self):
+        self.type_map = defaultdict(list)
+        self.coord_map = dict()
+
+    def remove_all_types(self):
+        self.coord_map = dict()
+        self.type_map = defaultdict(list)
+
+    def remove_all(self, type):
+        if type in self.types:
+            all = self.type_map[type]
+            for coord in all:
+                try:
+                    del self.coord_map[coord]
+                except KeyError:
+                    pass
+            del self.type_map[type]
+
+    def remove(self, coordinate):
+        type = self.coord_map.get(coordinate)
+        if type is not None:
+            self.type_map[type].remove(coordinate)
+            del self.coord_map[coordinate]
+
+    def set(self, coordinate, type):
+        if type in self.types:
+            self.coord_map[coordinate] = type
+            if coordinate not in self.type_map[type]:
+                self.type_map[type].append(coordinate)
+
+    def get(self, coordinate):
+        return self.coord_map.get(coordinate)
+
+    def get_all(self, type):
+        return self.type_map[type]
+
+    def get_color(self, coordinate):
+        type = self.coord_map.get(coordinate)
+        if type is not None:
+            return self.color[type]
+
 
 def parse_str_coord(coord):
     # String format: 'x,y'
