@@ -1,5 +1,4 @@
 from tkinter import *
-from PIL import ImageTk, Image
 from math import floor
 import onitama as oni
 from ai import create_ai
@@ -72,13 +71,16 @@ class GUI:
         self.board_canvas.bind('<Button-1>', self.board_click)
         self.highlights = HighlightManager()
         self.draw_board()
-        images = {
-            name: Image.open('./pieces/{}.png'.format(name)).resize((self.square_size, self.square_size), Image.ANTIALIAS)
-            for name in self.piece_names
-        }
+        # Assume images are already the correct size (that being self.square_size)
+        # Otherwise will have to rescale using some combination of image.zoom(n,n)
+        # and image.subsample(n,n), which only take integer arguments!
+        # Of course, this would make the resulting images look awful... But, this way
+        # we remove the PIL dependency (which can be a pain on certain operating systems)
+        # I can also prepare a selection of pre-scaled images, and allow the user
+        # to select from a handful of hardcoded board sizes
         self.images = {
-            name: ImageTk.PhotoImage(image)
-            for name, image in images.items()
+            name: PhotoImage(file='./pieces/{}.png'.format(name))
+            for name in self.piece_names
         }
         self.selected = None
         self.target = None
