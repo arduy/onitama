@@ -331,13 +331,17 @@ class GUI:
         self.update()
 
     def select_square(self, coordinate):
+        if self.game.active_player is not self.user:
+            return
         if self.selected is None:
-            if coordinate in self.game.legal_move_starts():
+            if coordinate in self.game.legal_move_sources():
                 self.selected = coordinate
-                self.highlight_square(coordinate, 'selected')
+                self.highlight_square(coordinate, 'source')
                 self.highlight_targets()
         elif self.target is None:
             if coordinate in self.game.legal_move_targets(self.selected):
+                # Player has selected a target for his/her move
+                # Complete move or prompt for card selection
                 self.target = coordinate
                 card_choices = self.game.get_card_choices_for_move(self.selected, self.target)
                 if len(card_choices) == 2:
@@ -345,21 +349,26 @@ class GUI:
                     self.highlight_square(coordinate, 'target')
                     self.status_label.config(text='Choose a card')
                 else:
-                    self.undo_highlights('selected', 'candidate')
+                    self.undo_highlights('source', 'candidate')
                     self.select_card(card_choices[0].name())
             elif coordinate == self.selected:
-                self.undo_highlights('selected', 'candidate')
+                # Unselect current selection
+                self.undo_highlights('source', 'candidate')
                 self.selected = None
-            elif coordinate in self.game.legal_move_starts():
-                self.undo_highlights('selected', 'candidate')
+            elif coordinate in self.game.legal_move_sources():
+                # Change current selection
+                self.undo_highlights('source', 'candidate')
                 self.selected = coordinate
-                self.highlight_square(coordinate, 'selected')
+                self.highlight_square(coordinate, 'source')
                 self.highlight_targets()
             else:
-                self.undo_highlights('selected', 'candidate')
+                # Clicked on a non move source, non target square
+                self.undo_highlights('source', 'candidate')
                 self.selected = None
 
     def select_card(self, card_name):
+        if self.game.active_player is not self.user:
+            return
         if self.selected is not None and self.target is not None:
             card = oni.NAME_TO_CARD[card_name]
             if card in self.game.cards[self.game.active_player]:
@@ -391,10 +400,10 @@ class GUI:
         self.do_game_move(start, end, card)
 
 class HighlightManager:
-    types = ['previous', 'selected', 'candidate', 'target']
+    types = ['previous', 'source', 'candidate', 'target']
     color = {
         'previous': '#ccffcc',
-        'selected': '#80ff80',
+        'source': '#80ff80',
         'candidate': 'yellow',
         'target': 'red',
     }

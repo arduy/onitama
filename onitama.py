@@ -134,7 +134,7 @@ class Game:
                 result[card][coord] = result[card][coord].union(end_coords)
         return result
 
-    def legal_move_starts(self):
+    def legal_move_sources(self):
         result = set()
         for x in self.legal_moves().values():
             for key, value in x.items():
