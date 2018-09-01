@@ -69,7 +69,7 @@ class GUI:
         self.card_canvas.bind('<Button-1>', self.card_click)
         self.board_canvas.pack(side=LEFT, padx=self.padding, pady=self.padding)
         self.board_canvas.bind('<Button-1>', self.board_click)
-        self.highlights = HighlightManager()
+        self.highlights = HighlightManager(canvas=self.board_canvas)
         self.draw_board()
         # Assume images are already the correct size (that being self.square_size)
         # Otherwise will have to rescale using some combination of image.zoom(n,n)
@@ -82,6 +82,7 @@ class GUI:
             name: PhotoImage(file='./pieces/{}.png'.format(name))
             for name in self.piece_names
         }
+        self.game = None
         self.selected = None
         self.target = None
         self.ai = create_ai()
@@ -95,21 +96,27 @@ class GUI:
         self.set_game(game=game, user=oni.Player.RED)
 
     def set_game(self, game, user):
+        if self.game is not None:
+            self.game.remove_listener(self)
         self.game = game
+        self.game.add_listener(self)
         self.user = user
         self.card_names = [card.name() for card in game.start_cards]
         self.undo_highlights('all')
-        self.update()
+        self.update_game_state()
         if not self.game.active_player is self.user:
             self.parent.after(self.ai_wait, self.do_ai_move)
 
+    def notify_move(self, move, game):
+        if game == self.game:
+            self.update_game_state()
+
     def flip_board(self):
         self.flip = not self.flip
-
-        self.update()
-
-    def update(self):
         self.draw_board()
+        self.update_game_state()
+
+    def update_game_state(self):
         self.draw_pieces(self.game.board.array)
         self.draw_cards(
             red=self.game.cards[oni.Player.RED],
@@ -312,7 +319,6 @@ class GUI:
 
     def highlight_square(self, coordinate, type):
         self.highlights.set(coordinate, type)
-        self.update()
 
     def highlight_targets(self):
         if self.selected is not None:
@@ -330,7 +336,6 @@ class GUI:
                 self.highlights.remove_all_types()
             else:
                 self.highlights.remove_all(arg)
-        self.update()
 
     def select_square(self, coordinate):
         if self.game.active_player is not self.user:
@@ -388,7 +393,6 @@ class GUI:
         self.undo_highlights('all')
         self.highlight_square(source, 'previous')
         self.highlight_square(target, 'previous')
-        self.update()
         if not self.game.active_player is self.user:
             self.parent.after(self.ai_wait, self.do_ai_move)
 
@@ -401,19 +405,18 @@ class GUI:
         end = move.end % 5, move.end // 5
         self.do_game_move(start, end, card)
 
-class HighlightManager:
-    types = ['previous', 'source', 'candidate', 'target']
-    color = {
-        'previous': '#ccffcc',
-        'source': '#80ff80',
-        'candidate': 'yellow',
-        'target': 'red',
-    }
-    def __init__(self):
+# Assign 'markings' to a board coordinate
+# For managing highlighting and various interface decorations
+# Meant to be easier to work with than tkinter canvas object tags
+class MarkingManager:
+    def __init__(self, marking_types):
+        self.types = marking_types
         self.type_map = defaultdict(list)
         self.coord_map = dict()
 
     def remove_all_types(self):
+        for key, value in self.coord_map.items():
+            self.update(key, None)
         self.coord_map = dict()
         self.type_map = defaultdict(list)
 
@@ -421,6 +424,7 @@ class HighlightManager:
         if type in self.types:
             all = self.type_map[type]
             for coord in all:
+                self.update(coord, None)
                 try:
                     del self.coord_map[coord]
                 except KeyError:
@@ -430,11 +434,13 @@ class HighlightManager:
     def remove(self, coordinate):
         type = self.coord_map.get(coordinate)
         if type is not None:
+            self.update(coord, None)
             self.type_map[type].remove(coordinate)
             del self.coord_map[coordinate]
 
     def set(self, coordinate, type):
         if type in self.types:
+            self.update(coordinate, type)
             self.coord_map[coordinate] = type
             if coordinate not in self.type_map[type]:
                 self.type_map[type].append(coordinate)
@@ -444,6 +450,33 @@ class HighlightManager:
 
     def get_all(self, type):
         return self.type_map[type]
+
+    # Implement in subclass
+    def update(self, coord, type):
+        pass
+
+
+class HighlightManager(MarkingManager):
+    def __init__(self, canvas):
+        super().__init__(marking_types=['previous', 'source', 'candidate', 'target'])
+        self.canvas = canvas
+        self.color = {
+            'previous': '#ccffcc',
+            'source': '#80ff80',
+            'candidate': 'yellow',
+            'target': 'red',
+        }
+
+    def update(self, coordinate, type):
+        tag = '{},{}'.format(coordinate[0],coordinate[1])
+        item = self.canvas.find_withtag(tag)
+        if type is None:
+            color = self.canvas.gettags(item)[1] # index 1 is original color
+        elif type in self.types:
+            color = self.color[type]
+        else:
+            return
+        self.canvas.itemconfig(item, fill=color)
 
     def get_color(self, coordinate):
         type = self.coord_map.get(coordinate)

@@ -66,6 +66,18 @@ class Game:
             Player.RED: {(2, 0)},
             Player.BLUE: {(2, 4)}
         }
+        self.listeners = []
+
+    def add_listener(self, listener):
+        self.listeners.append(listener)
+
+    def remove_listener(self, listener):
+        if listener in self.listeners:
+            self.listeners.remove(listener)
+
+    def notify_move(self, move, game):
+        for listener in self.listeners:
+            listener.notify_move(move, game)
 
     def validate_move(self, move):
         # Checks that the move is legal in the current game
@@ -97,6 +109,7 @@ class Game:
             self.neutral_card = move.card
             self.moves.append(move)
             self.active_player = opp
+            self.notify_move(move, self)
         else:
             raise IllegalMoveError
 
