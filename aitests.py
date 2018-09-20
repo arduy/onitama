@@ -94,23 +94,23 @@ class TestGame(unittest.TestCase):
         score = self.ai.alphabeta(
             alpha=-float('inf'),
             beta=float('inf'),
-            depth=5,
+            depth=4,
             node=self.ai.root,
         )
         curr = self.ai.root
         path = [curr]
-        for i in range(5):
+        for i in range(4):
             children = [node for node in curr.children if node.eval != None]
             curr = max(children, key=lambda x: -x.eval)
             path.append(curr)
 
         nega_score = self.ai.negamax(
             node=self.ai.root,
-            depth=5
+            depth=4
         )
         curr = self.ai.root
         nega_path = [curr]
-        for i in range(5):
+        for i in range(4):
             curr = max(curr.children, key=lambda x: -x.eval)
             nega_path.append(curr)
         self.assertEqual(score, nega_score)
@@ -124,7 +124,7 @@ class TestGame(unittest.TestCase):
                     if not getattr(move1, attr) == getattr(move2, attr):
                         return False
                 return True
-        for i in range(6):
+        for i in range(5):
             if path[i].prev_move is None:
                 self.assertTrue(nega_path[i].prev_move is None)
             elif nega_path[i].prev_move is None:
